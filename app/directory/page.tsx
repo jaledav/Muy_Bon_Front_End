@@ -9,6 +9,8 @@ export default function DirectoryPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
+  console.log("DirectoryPage searchParams:", searchParams)
+
   return (
     <main className="min-h-screen bg-[#f9f5f0]">
       <DirectoryHeader />

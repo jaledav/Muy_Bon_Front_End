@@ -1,5 +1,5 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient, type CookieOptions } from "@supabase/ssr"
+import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
           // If the cookie is removed, update the cookies for the request and response
           request.cookies.set({
             name,
-            value: '',
+            value: "",
             ...options,
           })
           response = NextResponse.next({
@@ -48,17 +48,22 @@ export async function middleware(request: NextRequest) {
           })
           response.cookies.set({
             name,
-            value: '',
+            value: "",
             ...options,
           })
         },
       },
-    }
+    },
   )
 
-  // Refresh session if expired - important!
-  // This will update the response if cookies need to be set
-  await supabase.auth.getUser()
+  try {
+    // Refresh session if expired - required for Server Components
+    // This will update the response if cookies need to be set
+    await supabase.auth.getSession()
+  } catch (error) {
+    // Log the error but don't throw it - allow the request to continue
+    console.error("Error refreshing auth session in middleware:", error)
+  }
 
   return response
 }
@@ -73,6 +78,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 }
