@@ -38,8 +38,4 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
-}
-
-
-import './globals.css'
+  )}

@@ -287,5 +287,16 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       price,
       vibes,
       description,
+      // Simulated popular times data for demo (replace with real data if available)
+      popular_times_histogram_gmaps: {
+        Monday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+        Tuesday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+        Wednesday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+        Thursday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+        Friday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+        Saturday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+        Sunday: Array.from({ length: 12 }, (_, i) => ({ hour: 8 + i, occupancyPercent: Math.floor(Math.random() * 100) })),
+      },
+      popular_times_live_text_gmaps: "Live data unavailable in demo",
     })) // Only return the fields needed for the response
 }

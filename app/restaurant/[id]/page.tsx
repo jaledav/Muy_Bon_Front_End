@@ -38,7 +38,7 @@ export default function RestaurantPage() {
         const data = await fetchRestaurantById(id)
         setRestaurantData(data)
         console.log("Loaded restaurant data:", data)
-        console.log("Popular times data:", data?.popular_times_histogram_gmaps)
+        console.log("Popular times data:", JSON.stringify(data?.popular_times_histogram_gmaps, null, 2))
       } catch (err: any) {
         console.error("Error loading restaurant:", err)
         setError(err.message || "Failed to load restaurant details")
@@ -127,44 +127,79 @@ export default function RestaurantPage() {
   return (
     <main className="min-h-screen bg-[#f9f5f0]">
       {/* Hero Section */}
-      <div className="relative h-[50vh] w-full">
+      <div className="relative w-full overflow-hidden rounded-lg bg-[#f9f5f0] p-4"> {/* Added padding */}
         <Image
           src={restaurant.cover_image_url_gmaps || "/placeholder.svg?height=600&width=1200"}
           alt={restaurant.name || "Restaurant Image"}
-          fill
-          className="object-cover"
+          className="object-contain max-h-[50vh] mx-auto" // Changed object-cover to object-contain and added max-h, removed w-full and ml-0 mr-auto, added flex-none
+          sizes="100vw" // Added sizes prop
+          width={1200} // Added placeholder width
+          height={600} // Added placeholder height
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-        <div className="absolute bottom-0 left-0 p-8 text-white max-w-4xl">
-          <Link href="/directory" className="flex items-center mb-4 text-white/80 hover:text-white">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Directory
-          </Link>
-          <h1 className="text-5xl font-bold font-playfair mb-4">{restaurant.name}</h1>
-          {restaurant.sub_title && <p className="text-xl mb-4 text-white/90">{restaurant.sub_title}</p>}
-          <div className="flex items-center flex-wrap gap-x-6 gap-y-2">
-            <div className="flex items-center">
-              <MapPin className="w-5 h-5 mr-2" />
-              <p className="text-lg">{restaurant.neighborhood_gmaps || restaurant.city_gmaps}</p>
-            </div>
-            {restaurant.total_score_gmaps && (
-              <div className="flex items-center">
-                <Star className="w-5 h-5 mr-2 text-yellow-400" />
-                <span className="text-lg font-semibold">{restaurant.total_score_gmaps.toFixed(1)}</span>
-                <span className="ml-2 text-white/80">
-                  ({restaurant.reviews_count_gmaps?.toLocaleString() || 0} reviews)
-                </span>
-              </div>
-            )}
-            {restaurant.price_range_gmaps && (
-              <Badge variant="outline" className="bg-white/20 text-white border-white/50 text-lg px-3 py-1">
-                {restaurant.price_range_gmaps}
-              </Badge>
-            )}
-          </div>
-        </div>
+        {/* Removed gradient overlay */}
+      </div> {/* Close the main Hero section div */}
+
+      {/* Back to Directory Link */}
+      <div className="container mx-auto max-w-7xl px-4 mt-4">
+        <Link href="/directory" className="inline-flex items-center text-primary hover:underline">
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back to directory
+        </Link>
       </div>
+
+      <div className="container mx-auto max-w-7xl px-4 mt-4">
+        <h1 className="text-3xl font-bold text-black text-left">{restaurant.name}</h1>
+        {restaurant.sub_title && (
+          <p className="text-lg text-muted-foreground mt-2 text-left">{restaurant.sub_title}</p>
+        )}
+
+        {/* Restaurant Summary Info */}
+        <div className="flex items-center space-x-4 mt-4 text-muted-foreground text-sm">
+          {/* Location */}
+          {restaurant.neighborhood_gmaps || restaurant.city_gmaps ? (
+            <div className="flex items-center">
+              <MapPin className="w-4 h-4 mr-1" />
+              <span>{restaurant.neighborhood_gmaps || restaurant.city_gmaps}</span>
+            </div>
+          ) : null}
+
+          {/* Google Review Score */}
+          {restaurant.total_score_gmaps !== null && restaurant.reviews_count_gmaps !== null ? (
+            <div className="flex items-center">
+              <Star className="w-4 h-4 mr-1 text-yellow-400 fill-yellow-400" />
+              <span>{restaurant.total_score_gmaps.toFixed(1)}</span>
+              <span className="ml-1">({restaurant.reviews_count_gmaps.toLocaleString()} reviews)</span>
+            </div>
+          ) : null}
+
+          {/* Critic Review Count */}
+          {restaurant.critic_reviews && restaurant.critic_reviews.length > 0 ? (
+            <div className="flex items-center">
+              <span>{restaurant.critic_reviews.length} Critic Review{restaurant.critic_reviews.length > 1 ? 's' : ''}</span>
+            </div>
+          ) : null}
+
+
+          {/* Price Range */}
+          {restaurant.price_range_gmaps && (
+            <div className="flex items-center">
+              <span>{restaurant.price_range_gmaps}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Additional Information */}
+        {restaurant.additional_info_gmaps && (
+          <div className="mt-6 text-muted-foreground text-sm">
+            <h4 className="font-semibold mb-2">Additional Information:</h4>
+            {/* Assuming additional_info_gmaps is a simple string or can be stringified */}
+            <p>{String(restaurant.additional_info_gmaps)}</p>
+          </div>
+        )}
+
+      </div>
+
 
       <div className="container px-4 py-12 mx-auto max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -214,7 +249,7 @@ export default function RestaurantPage() {
                         <p className="text-muted-foreground">{restaurant.category_name_gmaps || "Restaurant"}</p>
                         {restaurant.categories_gmaps && restaurant.categories_gmaps.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {restaurant.categories_gmaps.slice(0, 3).map((category) => (
+                            {restaurant.categories_gmaps.map((category) => (
                               <Badge key={category} variant="outline" className="text-xs">
                                 {category}
                               </Badge>
@@ -222,86 +257,9 @@ export default function RestaurantPage() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Price Range</h4>
-                        <p className="text-muted-foreground">{restaurant.price_range_gmaps || "Not specified"}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Location</h4>
-                        <p className="text-muted-foreground">
-                          {restaurant.neighborhood_gmaps || restaurant.city_gmaps || "London"}
-                        </p>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Vibe Section */}
-                {restaurant.vibes_gmaps && restaurant.vibes_gmaps.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl font-playfair">Vibe</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {restaurant.vibes_gmaps.map((vibe: string) => (
-                          <Badge key={vibe} variant="secondary" className="text-sm px-3 py-1">
-                            {vibe}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Popular Times - Only on Overview */}
-                {restaurant.popular_times_histogram_gmaps && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl font-playfair">Popular Times</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        See when this restaurant is typically busiest throughout the week.
-                      </p>
-                      <PopularTimesChart
-                        popularTimes={restaurant.popular_times_histogram_gmaps as Record<string, any>}
-                      />
-                      {restaurant.popular_times_live_text_gmaps && (
-                        <p className="text-sm text-muted-foreground mt-4">
-                          Currently: {restaurant.popular_times_live_text_gmaps}
-                          {restaurant.popular_times_live_percent_gmaps &&
-                            ` (${restaurant.popular_times_live_percent_gmaps}% busy)`}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* People Also Search */}
-                {restaurant.people_also_search_gmaps && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl font-playfair">People Also Search For</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        {(restaurant.people_also_search_gmaps as any[]).map((place, index) => (
-                          <div key={index} className="p-4 border rounded-lg hover:bg-gray-50">
-                            <h4 className="font-semibold mb-1">{place.title}</h4>
-                            <div className="flex items-center">
-                              <Star className="w-4 h-4 mr-1 text-yellow-400" />
-                              <span className="text-sm">{place.totalScore?.toFixed(1) || "N/A"}</span>
-                              <span className="ml-1 text-xs text-muted-foreground">
-                                ({place.reviewsCount?.toLocaleString() || 0} reviews)
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </TabsContent>
 
               <TabsContent value="details" className="space-y-6">
@@ -436,7 +394,10 @@ export default function RestaurantPage() {
                       <>
                         <Separator />
                         <div>
-                          <h5 className="font-medium mb-1">Located In</h5>
+                          <h5 className="font-medium mb-1 flex items-center">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            Address
+                          </h5>
                           <p className="text-sm text-muted-foreground">{restaurant.located_in_gmaps}</p>
                         </div>
                       </>
@@ -446,18 +407,10 @@ export default function RestaurantPage() {
               </TabsContent>
 
               <TabsContent value="reviews" className="space-y-6">
-                {/* Critic Reviews - ALL REVIEWS */}
+                {/* Critic Reviews */}
                 {restaurant.critic_reviews && restaurant.critic_reviews.length > 0 && (
                   <div>
                     <h4 className="font-semibold mb-4 text-lg text-black">Critic Reviews</h4>
-
-                    {/* Additional Details from first critic review - moved outside and above first review box */}
-                    {restaurant.critic_reviews[0]?.other_details_critic && (
-                      <div className="mb-6 p-4 bg-amber-50 rounded-lg border-l-4 border-amber-400">
-                        <p className="text-sm text-amber-800">{restaurant.critic_reviews[0].other_details_critic}</p>
-                      </div>
-                    )}
-
                     <div className="space-y-4">
                       {restaurant.critic_reviews.map((review: CriticReview) => (
                         <div key={review.id} className="border rounded-lg p-4 bg-gray-50">
@@ -474,137 +427,102 @@ export default function RestaurantPage() {
                               </a>
                             )}
                           </div>
-
-                          {/* Review Snippet Only */}
                           {review.review_snippet_critic && (
                             <p className="text-sm mb-3 leading-relaxed">"{review.review_snippet_critic}"</p>
                           )}
-
-                          {/* Popular Menu Items */}
-                          {review.popular_menu_items_critic && review.popular_menu_items_critic.length > 0 && (
-                            <div className="mb-3">
-                              <h6 className="font-medium mb-2 text-xs">Recommended Dishes</h6>
-                              <div className="flex flex-wrap gap-1">
-                                {review.popular_menu_items_critic.map((item, idx) => (
-                                  <Badge key={idx} variant="secondary" className="text-xs">
-                                    {item}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="text-xs text-muted-foreground">
-                            {review.review_date_critic
-                              ? new Date(review.review_date_critic).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })
-                              : "Date unknown"}
-                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* CSE Review Snippets (No Duplicates) - No heading */}
-                {uniqueCSESnippets && uniqueCSESnippets.length > 0 && (
-                  <div className="space-y-4">
-                    {uniqueCSESnippets.map((snippet: CSEReviewSnippet) => (
-                      <div key={snippet.id} className="border rounded-lg p-4 bg-gray-50">
-                        <div className="flex justify-between items-start mb-3">
-                          <h5 className="font-medium">{snippet.publication_cse || snippet.domain_cse}</h5>
-                          {snippet.url && (
-                            <a
-                              href={snippet.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline flex items-center"
-                            >
-                              Read more <ExternalLink className="w-3 h-3 ml-1" />
-                            </a>
-                          )}
+                {/* Google Reviews */}
+                {restaurant.google_user_reviews && restaurant.google_user_reviews.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="font-semibold mb-4 text-lg text-black">Google Reviews Summary</h4>
+                    {/* Google Review Summary */}
+                    {restaurant.total_score_gmaps !== null && restaurant.reviews_count_gmaps !== null && (
+                      <div className="bg-blue-50 p-6 rounded-lg">                        <div className="flex items-center mb-4">
+                          <Star className="w-6 h-6 mr-2 text-yellow-400 fill-yellow-400" />
+                          <div>
+                            <p className="text-4xl font-bold mb-1">{restaurant.total_score_gmaps.toFixed(1)}</p>
+                            <p className="text-sm text-muted-foreground">Based on {restaurant.reviews_count_gmaps} reviews</p>
+                          </div>
                         </div>
-
-                        {snippet.og_description_cse && (
-                          <p className="text-sm mb-3 leading-relaxed">{snippet.og_description_cse}</p>
-                        )}
-
-                        <div className="text-xs text-muted-foreground">
-                          {snippet.article_published_date_cse
-                            ? new Date(snippet.article_published_date_cse).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })
-                            : "Date unknown"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Google Reviews Summary - Moved to Bottom */}
-                {restaurant.total_score_gmaps && (
-                  <div className="bg-blue-50 p-6 rounded-lg">
-                    <h4 className="font-semibold mb-4 flex items-center">
-                      <Star className="w-5 h-5 mr-2 text-yellow-400" />
-                      Google Reviews Summary
-                    </h4>
-                    <div className="flex items-center mb-4">
-                      <span className="text-3xl font-bold mr-2">{restaurant.total_score_gmaps.toFixed(1)}</span>
-                      <div>
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < Math.floor(restaurant.total_score_gmaps!) ? "text-yellow-400" : "text-gray-300"
-                              }`}
-                              fill="currentColor"
-                            />
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Based on {restaurant.reviews_count_gmaps?.toLocaleString() || 0} reviews
-                        </p>
-                      </div>
-                    </div>
-
-                    {Object.keys(reviewsDistribution).length > 0 && (
-                      <div className="space-y-2">
-                        {Object.entries(reviewsDistribution)
-                          .sort(([a], [b]) => b.localeCompare(a))
-                          .map(([rating, count]) => {
-                            const totalReviews = restaurant.reviews_count_gmaps || 0
-                            const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0
+                        <div className="space-y-2">
+                          {Object.entries(reviewsDistribution).map(([rating, count]) => {
+                            const totalReviews = restaurant.reviews_count_gmaps || 0;
+                            const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
                             return (
                               <div key={rating} className="flex items-center">
-                                <span className="w-20 text-sm">{rating.replace(/([A-Z])/g, " $1").trim()}</span>
+                                <span className="w-20 text-sm capitalize">{rating} Star</span>
                                 <div className="flex-1 h-2 mx-3 bg-gray-200 rounded-full">
                                   <div
                                     className="h-2 bg-yellow-400 rounded-full"
                                     style={{ width: `${percentage}%` }}
                                   ></div>
                                 </div>
-                                <span className="w-12 text-sm text-right">{count.toLocaleString()}</span>
+                                <span className="w-12 text-sm text-right">{count}</span>
                               </div>
-                            )
+                            );
                           })}
+                        </div>
                       </div>
                     )}
+
+                    {/* Individual Google Reviews */}
+                    <div className="space-y-4 mt-6">
+                      {restaurant.google_user_reviews.map((review) => (
+                        <div key={review.id} className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex justify-between items-start mb-3">
+                            <h5 className="font-medium">{review.reviewer_name_gmaps || "Google User"}</h5>
+                            {review.stars_gmaps !== null && (
+                              <div className="flex items-center text-sm">
+                                <Star className="w-4 h-4 mr-1 text-yellow-400 fill-yellow-400" />
+                                <span>{review.stars_gmaps.toFixed(1)}</span>
+                              </div>
+                            )}
+                          </div>
+                          {review.review_text_gmaps && (
+                            <p className="text-sm mb-3 leading-relaxed">{review.review_text_gmaps}</p>
+                          )}
+                          {review.published_at_text_gmaps && (
+                            <p className="text-xs text-muted-foreground">{review.published_at_text_gmaps}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {/* No Reviews Message */}
-                {(!restaurant.critic_reviews || restaurant.critic_reviews.length === 0) &&
-                  (!uniqueCSESnippets || uniqueCSESnippets.length === 0) && (
-                    <p className="text-muted-foreground text-center py-8">
-                      No professional reviews or mentions available yet.
-                    </p>
-                  )}
+                 {/* CSE Review Snippets */}
+                {restaurant.cse_review_snippets && restaurant.cse_review_snippets.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="font-semibold mb-4 text-lg text-black">Web Snippets</h4>
+                    <div className="space-y-4">
+                      {restaurant.cse_review_snippets.map((snippet: CSEReviewSnippet) => (
+                        <div key={snippet.id} className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex justify-between items-start mb-3">
+                            <h5 className="font-medium">{snippet.publication_cse || snippet.domain_cse || "Web Source"}</h5>
+                             {snippet.url && (
+                              <a
+                                href={snippet.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline flex items-center"
+                              >
+                                Read more <ExternalLink className="w-3 h-3 ml-1" />
+                              </a>
+                            )}
+                          </div>
+                          {snippet.snippet_text_cse && (
+                            <p className="text-sm mb-3 leading-relaxed">"{snippet.snippet_text_cse}"</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               {questionsAndAnswers.length > 0 && (

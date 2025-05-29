@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // ESLint and TypeScript checks are enabled by default when these are removed
   images: {
-    unoptimized: true,
+    domains: [
+      "streetviewpixels-pa.googleapis.com",
+      "lh3.googleusercontent.com",
+      "images.trvl-media.com"
+    ],
+    // unoptimized: true, // Consider removing this to enable Next.js image optimization
   },
 }
 

@@ -142,17 +142,7 @@ export function PaginationControls({ currentPage, totalPages, searchParams }: Pa
       </div>
 
       {/* Manual Test Buttons */}
-      <div className="flex items-center justify-center gap-2">
-        <Button size="sm" onClick={() => (window.location.href = "/directory?page=2")}>
-          Force Page 2
-        </Button>
-        <Button size="sm" onClick={() => (window.location.href = "/directory?page=3")}>
-          Force Page 3
-        </Button>
-        <Button size="sm" onClick={() => (window.location.href = "/directory")}>
-          Force Page 1
-        </Button>
-      </div>
+      {/* Force page buttons removed as requested */}
     </div>
   )
 }

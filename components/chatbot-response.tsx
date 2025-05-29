@@ -11,6 +11,10 @@ interface Restaurant {
   price: string
   vibes: string[]
   description: string
+  popular_times_histogram_gmaps?: {
+    Monday: { hour: number; occupancyPercent: number }[]
+  }
+  popular_times_live_text_gmaps?: string
 }
 
 interface ChatbotResponseProps {
@@ -19,6 +23,9 @@ interface ChatbotResponseProps {
 }
 
 export function ChatbotResponse({ response, restaurants }: ChatbotResponseProps) {
+  // Debugging log to verify received props
+  console.log("ChatbotResponse props:", { response, restaurants });
+
   return (
     <div className="mt-8 space-y-6 text-left">
       <p className="text-lg">{response}</p>
@@ -49,6 +56,28 @@ export function ChatbotResponse({ response, restaurants }: ChatbotResponseProps)
                   ))}
                 </div>
                 <p className="text-sm">{restaurant.description}</p>
+                {restaurant.popular_times_histogram_gmaps && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold">Popular Times</h4>
+                    <p className="text-xs text-muted-foreground">Data for Monday:</p>
+                    <div className="flex gap-1 mt-2">
+                      {restaurant.popular_times_histogram_gmaps.Monday.map((timeSlot, index) => (
+                        <div key={index} className="flex-1 text-center">
+                          <div
+                            className="h-8 bg-primary rounded"
+                            style={{ height: `${timeSlot.occupancyPercent}%` }}
+                          ></div>
+                          <span className="text-xs mt-1 block">{timeSlot.hour}:00</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {restaurant.popular_times_live_text_gmaps && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Live Status: {restaurant.popular_times_live_text_gmaps}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </Link>

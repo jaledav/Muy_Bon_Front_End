@@ -37,6 +37,10 @@ export default function Hero() {
       }
 
       const data = await response.json()
+      
+      // Debugging log to verify API response
+      console.log("API Response:", data);
+
       setChatResponse(data.message)
       setRestaurants(data.restaurants || [])
     } catch (error) {
