@@ -15,15 +15,18 @@ export default async function RestaurantGrid({
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  const page = typeof searchParams?.page === "string" ? Number(searchParams.page) : 1
-  // Use ITEMS_PER_PAGE for limit
-  const limit = typeof searchParams?.limit === "string" ? Number(searchParams.limit) : ITEMS_PER_PAGE
+  // Await searchParams before accessing its properties
+  const params = await searchParams;
 
-  const searchTerm = typeof searchParams?.search === "string" ? searchParams.search : undefined
-  const location = typeof searchParams?.location === "string" ? searchParams.location : undefined
-  const vibes = typeof searchParams?.vibes === "string" ? searchParams.vibes.split(",") : undefined
-  const priceRange = typeof searchParams?.price === "string" ? searchParams.price : undefined
-  const minRatingParam = typeof searchParams?.minRating === "string" ? Number(searchParams.minRating) : undefined
+  const page = typeof params?.page === "string" ? Number(params.page) : 1
+  // Use ITEMS_PER_PAGE for limit
+  const limit = typeof params?.limit === "string" ? Number(params.limit) : ITEMS_PER_PAGE
+
+  const searchTerm = typeof params?.search === "string" ? params.search : undefined
+  const location = typeof params?.location === "string" ? params.location : undefined
+  const vibes = typeof params?.vibes === "string" ? params.vibes.split(",") : undefined
+  const priceRange = typeof params?.price === "string" ? params.price : undefined
+  const minRatingParam = typeof params?.minRating === "string" ? Number(params.minRating) : undefined
   const minRating = Number.isFinite(minRatingParam) ? minRatingParam : undefined
 
   const filters: Parameters<typeof searchRestaurants>[0] = {

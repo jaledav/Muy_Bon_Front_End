@@ -3,9 +3,10 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase-client"
 
 export interface User {
-  id: number
+  id: string
   email: string
   name: string
   created_at: string
@@ -96,48 +97,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (name: string, email: string, password: string) => {
     try {
-      setIsLoading(true)
-      const res = await fetch("/api/auth/signup", {
+      // First attempt the signup
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
-      })
+      });
 
-      // First check if response is ok before trying to parse JSON
-      if (!res.ok) {
-        try {
-          const contentType = res.headers.get("content-type")
-          if (contentType && contentType.includes("application/json")) {
-            const errorData = await res.json()
-            return { success: false, error: errorData.message || "Signup failed" }
-          } else {
-            // Handle non-JSON responses
-            const text = await res.text()
-            console.error("Non-JSON error response:", text.substring(0, 100) + "...")
-            return { success: false, error: `Server error: ${res.status}` }
-          }
-        } catch (parseError) {
-          console.error("Error parsing error response:", parseError)
-          return { success: false, error: `Server error: ${res.status}` }
-        }
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed");
       }
 
-      try {
-        // Only try to parse JSON for successful responses
-        const data = await res.json()
-        router.refresh() // Refresh potentially needed data
-        return { success: true, message: data.message }
-      } catch (jsonError) {
-        console.error("Error parsing JSON from successful response:", jsonError)
-        return { success: false, error: "Unexpected response from server" }
+      // Get the session directly from the signup response
+      const { data: authData } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (!authData?.user) {
+        console.error("Could not get authenticated user after signup");
+        return {
+          success: true,
+          message: data.message,
+        };
       }
-    } catch (error) {
-      console.error("Signup error:", error)
-      return { success: false, error: "An unexpected error occurred" }
-    } finally {
-      setIsLoading(false)
+
+      // Create profile after successful signup and login
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: authData.user.id,
+            name: name,
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        // Don't throw here, as signup was successful
+      }
+
+      // Set the user in context
+      setUser({
+        id: authData.user.id,
+        email: authData.user.email || "",
+        name: name,
+        created_at: authData.user.created_at,
+      });
+
+      return {
+        success: true,
+        message: data.message,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
-  }
+  };
 
   const logout = async () => {
     try {

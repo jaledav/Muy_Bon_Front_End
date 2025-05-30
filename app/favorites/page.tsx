@@ -116,7 +116,7 @@ export default function FavoritesPage() {
     setFilteredFavorites(filtered)
   }, [favorites, searchQuery, selectedFilter])
 
-  const handleRemoveFavorite = async (restaurantId: number) => {
+  const handleRemoveFavorite = async (restaurantId: string) => {
     if (!user) return
 
     try {

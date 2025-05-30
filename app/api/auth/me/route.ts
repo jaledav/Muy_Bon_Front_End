@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 import type { Database } from "@/lib/supabase.types"
 
 export async function GET(request: Request) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   // Create Supabase client with cookies
   const supabase = createServerClient<Database>(

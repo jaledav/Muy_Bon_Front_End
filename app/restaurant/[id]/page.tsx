@@ -39,6 +39,8 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import PopularTimesChart from "@/components/popular-times-chart"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase-client"
 
 interface SimilarPlace {
   id: string;
@@ -203,6 +205,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
 }
 
 export default function RestaurantPage() {
+  const { user } = useAuth()
   const params = useParams<{ id: string }>()
   const id = params ? decodeURIComponent(params.id) : ""
 
@@ -291,9 +294,74 @@ export default function RestaurantPage() {
     loadRestaurant()
   }, [id])
 
-  const toggleFavorite = () => {
-    setIsFavorited(!isFavorited)
-  }
+  const toggleFavorite = async () => {
+    if (!user) {
+      // Redirect to login if no user
+      window.location.href = `/login?redirect=/restaurant/${id}`;
+      return;
+    }
+
+    if (!restaurant) {
+      console.error('No restaurant data available');
+      return;
+    }
+
+    try {
+      if (isFavorited) {
+        // Remove from favorites
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('restaurant_id', restaurant.id);
+
+        if (error) throw error;
+        setIsFavorited(false);
+      } else {
+        // Add to favorites
+        const { error } = await supabase
+          .from('favorites')
+          .insert([
+            {
+              user_id: user.id,
+              restaurant_id: restaurant.id
+            }
+          ]);
+
+        if (error) throw error;
+        setIsFavorited(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
+  // Check if restaurant is favorited on load
+  useEffect(() => {
+    async function checkFavorited() {
+      if (!user || !restaurant) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('restaurant_id', restaurant.id)
+          .single();
+
+        if (error && !error.message.includes('does not exist')) {
+          console.error('Error checking favorite status:', error);
+          return;
+        }
+
+        setIsFavorited(!!data);
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+      }
+    }
+
+    checkFavorited();
+  }, [user, restaurant]);
 
   if (loading) return <RestaurantPageSkeleton />
   if (error) return <ErrorMessage error={error} />
