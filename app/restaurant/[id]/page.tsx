@@ -521,7 +521,7 @@ export default function RestaurantPage() {
               vibes_gmaps.length > 0 &&
               vibes_gmaps.map((vibe, index) => (
                 <QuickPulseChip
-                  key={vibe ? `vibe-${vibe}` : `vibe-${index}`}
+                  key={`vibe-${vibe}-${index}`}
                   icon={<Sparkles className="w-4 h-4" />}
                   label={vibe}
                   onClick={() => scrollToRef(aboutRef, "about")}
