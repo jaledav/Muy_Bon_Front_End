@@ -110,44 +110,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.message || "Signup failed");
       }
 
-      // Get the session directly from the signup response
-      const { data: authData } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (!authData?.user) {
-        console.error("Could not get authenticated user after signup");
-        return {
-          success: true,
-          message: data.message,
-        };
-      }
-
-      // Create profile after successful signup and login
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: authData.user.id,
-            name: name,
-            created_at: new Date().toISOString(),
-          },
-          { onConflict: "id" }
-        );
-
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        // Don't throw here, as signup was successful
-      }
-
-      // Set the user in context
-      setUser({
-        id: authData.user.id,
-        email: authData.user.email || "",
-        name: name,
-        created_at: authData.user.created_at,
-      });
+      // The API route handles user creation and email sending.
+      // The user will be authenticated after verifying their email.
+      // We don't need to sign them in immediately here.
 
       return {
         success: true,

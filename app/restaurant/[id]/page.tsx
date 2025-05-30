@@ -1,10 +1,9 @@
 "use client"
 
-import type React from "react"
+import React, { useState, useEffect, useRef } from "react"
 // ListOrdered is no longer used in QuickPulseStrip, remove if not used elsewhere.
 // import { ListOrdered } from 'lucide-react';
 
-import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import Image from "next/image"
@@ -109,6 +108,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
         className="object-cover dark:opacity-80"
         priority
         sizes="100vw"
+        onError={(e) => console.error(`Failed to load hero placeholder image: ${e.currentTarget.src}`)} // Keep onError
       />
     )
   }
@@ -122,6 +122,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
         className="object-cover dark:opacity-80"
         priority
         sizes="50vw"
+        onError={(e) => console.error(`Failed to load hero image 1: ${e.currentTarget.src}`)} // Keep onError
       />
     )
   }
@@ -136,6 +137,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
             fill
             className="object-cover dark:opacity-80"
             sizes="50vw"
+            onError={(e) => console.error(`Failed to load hero image 1: ${e.currentTarget.src}`)} // Keep onError
           />
         </div>
         <div className="relative h-full">
@@ -145,6 +147,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
             fill
             className="object-cover dark:opacity-80"
             sizes="50vw"
+            onError={(e) => console.error(`Failed to load hero image 2: ${e.currentTarget.src}`)} // Keep onError
           />
         </div>
       </div>
@@ -161,6 +164,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
             fill
             className="object-cover dark:opacity-80"
             sizes="66vw"
+            onError={(e) => console.error(`Failed to load hero image 1: ${e.currentTarget.src}`)} // Keep onError
           />
         </div>
         <div className="grid grid-rows-2 col-span-1 h-full">
@@ -171,6 +175,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
               fill
               className="object-cover dark:opacity-80"
               sizes="33vw"
+              onError={(e) => console.error(`Failed to load hero image 2: ${e.currentTarget.src}`)} // Keep onError
             />
           </div>
           <div className="relative h-full">
@@ -180,6 +185,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
               fill
               className="object-cover dark:opacity-80"
               sizes="33vw"
+              onError={(e) => console.error(`Failed to load hero image 3: ${e.currentTarget.src}`)} // Keep onError
             />
           </div>
         </div>
@@ -197,6 +203,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
             fill
             className="object-cover dark:opacity-80"
             sizes="50vw"
+            onError={(e) => console.error(`Failed to load hero image ${idx + 1}: ${e.currentTarget.src}`)} // Keep onError
           />
         </div>
       ))}
@@ -346,17 +353,19 @@ export default function RestaurantPage() {
           .from('favorites')
           .select('id')
           .eq('user_id', user.id)
-          .eq('restaurant_id', restaurant.id)
-          .single();
+          .eq('restaurant_id', restaurant.id); // Removed .single()
 
-        if (error && !error.message.includes('does not exist')) {
-          console.error('Error checking favorite status:', error);
+        if (error) {
+          console.log('Error checking favorite status:'); // Log a preceding message
+          console.dir(error); // Use console.dir for detailed object inspection
           return;
         }
 
-        setIsFavorited(!!data);
-      } catch (error) {
-        console.error('Error checking favorite status:', error);
+        // Check if data is not null/empty to determine if favorited
+        setIsFavorited(data !== null && data.length > 0);
+      } catch (error: any) { // Add type annotation for error
+        console.log('Error checking favorite status (catch block):'); // Log a preceding message
+        console.dir(error); // Use console.dir for detailed object inspection
       }
     }
 
@@ -421,6 +430,13 @@ export default function RestaurantPage() {
         : []
 
   const galleryImages = image_urls_gmaps?.slice(0, 12) || []
+
+  // Debug: Log image URLs for troubleshooting
+  if (typeof window !== 'undefined') {
+    console.log('heroImages', heroImages)
+    console.log('galleryImages', galleryImages)
+  }
+
   const hasGoogleReviews = google_user_reviews && google_user_reviews.length > 0
   const hasCriticOrWebReviews =
     (critic_reviews && critic_reviews.length > 0) || (filteredCseSnippets && filteredCseSnippets.length > 0)
@@ -492,11 +508,13 @@ export default function RestaurantPage() {
         <div className="container mx-auto max-w-5xl px-4">
           <div className="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
             {total_score_gmaps && reviews_count_gmaps && (
-              <QuickPulseChip
-                icon={<Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
-                label={`${total_score_gmaps.toFixed(1)} (${reviews_count_gmaps.toLocaleString()})`}
-                onClick={() => scrollToRef(reviewsRef, "reviews")}
-              />
+              <React.Fragment key="quick-pulse-score">
+                <QuickPulseChip
+                  icon={<Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
+                  label={`${total_score_gmaps.toFixed(1)} (${reviews_count_gmaps.toLocaleString()})`}
+                  onClick={() => scrollToRef(reviewsRef, "reviews")}
+                />
+              </React.Fragment>
             )}
             {/* Location Chip REMOVED */}
             {vibes_gmaps &&
@@ -510,11 +528,13 @@ export default function RestaurantPage() {
                 />
               ))}
             {price_range_gmaps && (
-              <QuickPulseChip
-                icon={<Tag className="w-4 h-4" />}
-                label={price_range_gmaps}
-                onClick={() => scrollToRef(aboutRef, "about")}
-              />
+              <React.Fragment key="quick-pulse-price">
+                <QuickPulseChip
+                  icon={<Tag className="w-4 h-4" />}
+                  label={price_range_gmaps}
+                  onClick={() => scrollToRef(aboutRef, "about")}
+                />
+              </React.Fragment>
             )}
           </div>
         </div>
@@ -704,6 +724,7 @@ export default function RestaurantPage() {
                             fill
                             className="object-cover hover:scale-105 transition-transform"
                             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                            onError={(e) => console.error(`Failed to load gallery image ${idx + 1}: ${e.currentTarget.src}`)}
                           />
                         </div>
                       ))}
@@ -786,7 +807,7 @@ export default function RestaurantPage() {
                                         <div className="flex items-center">
                                           {[...Array(validRating)].map((_, i) => (
                                             <Star
-                                              key={`rating-${rating}-star-${i}`}
+                                              key={`rating-${rating}-${index}-star-${i}`} // Modified key to include outer index
                                               className="w-4 h-4 text-yellow-400 fill-yellow-400"
                                             />
                                           ))}
@@ -804,7 +825,7 @@ export default function RestaurantPage() {
                               ? Math.max(0, Math.min(Math.round(review.stars_gmaps), 5))
                               : 0;
                             return (
-                              <div key={review.gmaps_review_id || `google-review-${index}`}
+                              <div key={review.gmaps_review_id ? `${review.gmaps_review_id}` : `review-${index}`}
                                    className="border rounded-lg p-5 bg-gray-50">
                                 <div className="flex justify-between items-start mb-4">
                                   <h5 className="font-semibold text-base text-gray-900">{review.reviewer_name_gmaps || "Google User"}</h5>
