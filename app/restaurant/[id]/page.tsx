@@ -41,14 +41,14 @@ import PopularTimesChart from "@/components/popular-times-chart"
 import { cn } from "@/lib/utils"
 
 interface SimilarPlace {
-  id: string
-  name: string
-  cover_image_url?: string | null
-  vibes_gmaps?: string[] | null
+  id: string;
+  name: string;
+  cover_image_url?: string | null;
+  vibes_gmaps?: string[] | null;
 }
 
-interface RestaurantWithDetails extends RestaurantWithReviews {
-  people_also_search_gmaps?: SimilarPlace[] | null
+type RestaurantWithDetails = Omit<RestaurantWithReviews, 'people_also_search_gmaps'> & {
+  people_also_search_gmaps?: SimilarPlace[] | null;
 }
 
 const findSimilarByVibe = (
@@ -89,7 +89,14 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
   const placeholder = "/placeholder.svg?height=600&width=800"
   const lowBandwidthPlaceholder = "/placeholder.svg?height=400&width=600"
 
-  const getSrc = (url?: string) => (useLowBandwidth ? lowBandwidthPlaceholder : url || placeholder)
+  const getSrc = (url?: string) => {
+    if (useLowBandwidth) return lowBandwidthPlaceholder;
+    if (!url) return placeholder;
+    // If URL doesn't start with http(s), assume it's a relative path
+    if (!url.startsWith('http')) return url;
+    // Add error handling for failed image loads
+    return url || placeholder;
+  }
 
   if (useLowBandwidth || validImages.length === 0) {
     return (
@@ -181,7 +188,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
   return (
     <div className="grid grid-cols-2 grid-rows-2 h-full">
       {validImages.slice(0, 4).map((img, idx) => (
-        <div key={idx} className="relative h-full">
+        <div key={`hero-${img || 'placeholder'}-${idx}`} className="relative h-full">
           <Image
             src={getSrc(img) || "/placeholder.svg"}
             alt={`${altText} ${idx + 1}`}
@@ -235,7 +242,8 @@ export default function RestaurantPage() {
     }
   }
 
-  const scrollToRef = (ref: React.RefObject<HTMLDivElement>, accordionValue?: string) => {
+  // Update the scrollToRef function to handle null checks
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>, accordionValue?: string) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: "smooth", block: "start" })
       if (accordionValue) {
@@ -323,10 +331,16 @@ export default function RestaurantPage() {
     people_also_search_gmaps,
   } = restaurant
 
-  const criticSummary = critic_reviews?.find((r) => r.summary_critic)?.summary_critic || description_gmaps
+  const criticSummary = critic_reviews?.find((r: { summary_critic: string | null }) => r.summary_critic)?.summary_critic || description_gmaps
 
-  const uniqueCriticPublications = new Set(critic_reviews?.map((r) => r.publication_critic?.toLowerCase()))
-  const filteredCseSnippets = cse_review_snippets?.filter((s) => {
+  const uniqueCriticPublications = new Set(
+    critic_reviews?.map((r: { publication_critic: string | null }) => r.publication_critic?.toLowerCase())
+  )
+
+  const filteredCseSnippets = cse_review_snippets?.filter((s: {
+    publication_cse: string | null;
+    domain_cse: string | null;
+  }) => {
     const pubName = (s.publication_cse || s.domain_cse)?.toLowerCase()
     return pubName ? !uniqueCriticPublications.has(pubName) : true
   })
@@ -344,10 +358,11 @@ export default function RestaurantPage() {
     (critic_reviews && critic_reviews.length > 0) || (filteredCseSnippets && filteredCseSnippets.length > 0)
   const hasAnyReviews = hasGoogleReviews || hasCriticOrWebReviews
 
+  // Update the reservation link logic
   const reservationLink =
     reserve_table_url_gmaps ||
-    (Array.isArray(booking_links_gmaps) && booking_links_gmaps.length > 0
-      ? booking_links_gmaps[0]?.url
+    (Array.isArray(booking_links_gmaps) && booking_links_gmaps.length > 0 && typeof booking_links_gmaps[0] === 'object'
+      ? (booking_links_gmaps[0] as { url?: string })?.url
       : typeof booking_links_gmaps === "string"
         ? booking_links_gmaps
         : null)
@@ -420,7 +435,7 @@ export default function RestaurantPage() {
               vibes_gmaps.length > 0 &&
               vibes_gmaps.map((vibe, index) => (
                 <QuickPulseChip
-                  key={`vibe-${index}`}
+                  key={vibe ? `vibe-${vibe}` : `vibe-${index}`}
                   icon={<Sparkles className="w-4 h-4" />}
                   label={vibe}
                   onClick={() => scrollToRef(aboutRef, "about")}
@@ -482,20 +497,14 @@ export default function RestaurantPage() {
                               <CardContent className="p-0">
                                 <div className="relative aspect-video">
                                   <Image
-                                    src={
-                                      place.cover_image_url ||
-                                      "/placeholder.svg?height=180&width=320&query=similar+restaurant" ||
-                                      "/placeholder.svg" ||
-                                      "/placeholder.svg" ||
-                                      "/placeholder.svg"
-                                    }
-                                    alt={place.name}
+                                    src={place.cover_image_url || "/placeholder.svg"}
+                                    alt={place.name || "Similar Restaurant"}
                                     fill
                                     className="object-cover rounded-t-md"
                                   />
                                 </div>
                                 <div className="p-3">
-                                  <h5 className="font-medium truncate">{place.name}</h5>
+                                  <h5 className="font-semibold text-base text-gray-900 truncate">{place.name}</h5>
                                 </div>
                               </CardContent>
                             </Card>
@@ -516,14 +525,8 @@ export default function RestaurantPage() {
                                 <CardContent className="p-0">
                                   <div className="relative aspect-video">
                                     <Image
-                                      src={
-                                        place.cover_image_url ||
-                                        "/placeholder.svg?height=180&width=320&query=similar+restaurant" ||
-                                        "/placeholder.svg" ||
-                                        "/placeholder.svg" ||
-                                        "/placeholder.svg"
-                                      }
-                                      alt={place.name}
+                                      src={place.cover_image_url || "/placeholder.svg"}
+                                      alt={place.name || "Similar Restaurant"}
                                       fill
                                       className="object-cover rounded-t-md"
                                     />
@@ -560,7 +563,7 @@ export default function RestaurantPage() {
                           {opening_hours_gmaps.map((entry: any, index: number) => {
                             if (typeof entry === "object" && entry !== null && "day" in entry && "hours" in entry) {
                               return (
-                                <li key={index} className="flex justify-between">
+                                <li key={`hours-${entry.day}-${index}`} className="flex justify-between">
                                   <span className="capitalize font-medium">{entry.day}:</span>
                                   <span>{String(entry.hours)}</span>
                                 </li>
@@ -578,7 +581,7 @@ export default function RestaurantPage() {
                       return (
                         <ul className="space-y-1">
                           {Object.entries(opening_hours_gmaps as Record<string, any>).map(([day, hours]) => (
-                            <li key={day} className="flex justify-between">
+                            <li key={`opening-hours-${day}`} className="flex justify-between">
                               <span className="capitalize font-medium">{day}:</span>
                               <span>{String(hours)}</span>
                             </li>
@@ -606,7 +609,8 @@ export default function RestaurantPage() {
                       </span>
                     </div>
                   )}
-                  {popular_times_histogram_gmaps && <PopularTimesChart popularTimes={popular_times_histogram_gmaps} />}
+                  {popular_times_histogram_gmaps && 
+                    <PopularTimesChart popularTimes={popular_times_histogram_gmaps as Record<string, any>} />}
                 </AccordionContent>
               </AccordionItem>
 
@@ -625,10 +629,10 @@ export default function RestaurantPage() {
                   <AccordionContent className="px-6 pb-6 pt-2">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {galleryImages.map((imgUrl, idx) => (
-                        <div key={idx} className="relative aspect-square rounded-md overflow-hidden">
+                        <div key={imgUrl ? `${imgUrl}-${idx}` : `gallery-img-${idx}`} className="relative aspect-square rounded-md overflow-hidden">
                           <Image
                             src={imgUrl || "/placeholder.svg"}
-                            alt={`${name} gallery image ${idx + 1}`}
+                            alt={`${restaurant.name || "Restaurant"} gallery image ${idx + 1}`}
                             fill
                             className="object-cover hover:scale-105 transition-transform"
                             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
@@ -695,24 +699,65 @@ export default function RestaurantPage() {
                               <div className="space-y-1">
                                 {Object.entries(reviews_distribution_gmaps as Record<string, number>)
                                   .sort((a, b) => Number.parseInt(b[0]) - Number.parseInt(a[0]))
-                                  .map(([rating, count]) => {
-                                    const percentage = reviews_count_gmaps ? (count / reviews_count_gmaps) * 100 : 0
+                                  .map(([rating, count], index) => {
+                                    const totalReviews = restaurant.reviews_count_gmaps || 0;
+                                    const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                                    const numericRating = Number(rating);
+                                    const validRating = Number.isFinite(numericRating)
+                                      ? Math.max(0, Math.min(numericRating, 5))
+                                      : 0;
                                     return (
-                                      <div key={rating} className="flex items-center text-sm">
-                                        <span className="w-16">{rating} star</span>
-                                        <div className="flex-1 h-2 mx-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                      <div key={`rating-distribution-${rating}`} className="flex items-center">
+                                        <span className="w-24 text-sm font-medium capitalize">{rating}</span>
+                                        <div className="flex-1 h-3 mx-4 bg-gray-200 rounded-full">
                                           <div
-                                            className="h-2 bg-yellow-400 rounded-full"
+                                            className="h-3 bg-yellow-400 rounded-full"
                                             style={{ width: `${percentage}%` }}
                                           ></div>
                                         </div>
-                                        <span className="w-10 text-right">{count}</span>
+                                        <div className="flex items-center">
+                                          {[...Array(validRating)].map((_, i) => (
+                                            <Star
+                                              key={`rating-${rating}-star-${i}`}
+                                              className="w-4 h-4 text-yellow-400 fill-yellow-400"
+                                            />
+                                          ))}
+                                        </div>
+                                        <span className="w-10 text-sm text-right font-medium ml-2">{count}</span>
                                       </div>
-                                    )
+                                    );
                                   })}
                               </div>
                             </Card>
                           )}
+                          {restaurant.google_user_reviews.map((review, index) => {
+                            // Update stars calculation to handle null
+                            const validStars = review.stars_gmaps != null
+                              ? Math.max(0, Math.min(Math.round(review.stars_gmaps), 5))
+                              : 0;
+                            return (
+                              <div key={review.gmaps_review_id || `google-review-${index}`}
+                                   className="border rounded-lg p-5 bg-gray-50">
+                                <div className="flex justify-between items-start mb-4">
+                                  <h5 className="font-semibold text-base text-gray-900">{review.reviewer_name_gmaps || "Google User"}</h5>
+                                  {review.stars_gmaps !== null && (
+                                    <div className="flex items-center text-sm">
+                                      <span className="font-medium mr-1">{review.stars_gmaps.toFixed(1)}</span>
+                                      {[...Array(validStars)].map((_, i) => (
+                                        <Star key={`review-star-${review.gmaps_review_id || index}-${i}`} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                {review.review_text_gmaps && (
+                                  <p className="text-sm mb-4 leading-relaxed text-gray-700">{review.review_text_gmaps}</p>
+                                )}
+                                {review.published_at_text_gmaps && (
+                                  <p className="text-xs text-muted-foreground">{review.published_at_text_gmaps}</p>
+                                )}
+                              </div>
+                            );
+                          })}
                         </TabsContent>
                       )}
                     </Tabs>
@@ -843,20 +888,41 @@ const QuickPulseChip: React.FC<QuickPulseChipProps> = ({ icon, label, onClick })
   </button>
 )
 
-interface ReviewCardProps {
-  review: CriticReview | CSEReviewSnippet
-  type: "critic" | "cse"
+// Update ReviewCard interfaces
+interface CriticReviewDisplay {
+  id: string;
+  publication_critic?: string | null;
+  review_snippet_critic?: string | null;
+  review_url_critic?: string;
+  summary_critic?: string | null;
 }
+
+interface CSEReviewDisplay {
+  id: string;
+  publication_cse?: string | null;
+  domain_cse?: string | null;
+  og_description_cse?: string | null;
+  snippet_text_cse?: string | null;
+  url?: string;
+}
+
+interface ReviewCardProps {
+  review: CriticReviewDisplay | CSEReviewDisplay;
+  type: "critic" | "cse";
+}
+
 const ReviewCard: React.FC<ReviewCardProps> = ({ review, type }) => {
   const publication =
     type === "critic"
-      ? (review as CriticReview).publication_critic
-      : (review as CSEReviewSnippet).publication_cse || (review as CSEReviewSnippet).domain_cse
+      ? (review as CriticReviewDisplay).publication_critic
+      : (review as CSEReviewDisplay).publication_cse || (review as CSEReviewDisplay).domain_cse
   const snippet =
     type === "critic"
-      ? (review as CriticReview).review_snippet_critic
-      : (review as CSEReviewSnippet).og_description_cse || (review as CSEReviewSnippet).snippet_text_cse
-  const url = type === "critic" ? (review as CriticReview).review_url_critic : (review as CSEReviewSnippet).url
+      ? (review as CriticReviewDisplay).review_snippet_critic || (review as CriticReviewDisplay).summary_critic
+      : (review as CSEReviewDisplay).og_description_cse || (review as CSEReviewDisplay).snippet_text_cse
+  const url = type === "critic" 
+    ? (review as CriticReviewDisplay).review_url_critic 
+    : (review as CSEReviewDisplay).url
 
   return (
     <Card className="overflow-hidden bg-gray-50 dark:bg-gray-700/50">
@@ -892,18 +958,16 @@ const RestaurantPageSkeleton: React.FC = () => (
       <Skeleton className="w-1/2 h-6 mb-6" />
       <div className="flex space-x-3 mb-8">
         {[...Array(3)].map(
-          // Adjusted skeleton count for quick pulse
           (_, i) => (
-            <Skeleton key={i} className="w-24 h-8 rounded-full" />
+            <Skeleton key={`quick-pulse-skeleton-${i}`} className="w-24 h-8 rounded-full" />
           ),
         )}
       </div>
       <div className="lg:flex lg:space-x-8">
         <div className="lg:w-2/3 space-y-4">
           {[...Array(2)].map(
-            // Adjusted skeleton count for accordion items
             (_, i) => (
-              <Skeleton key={i} className="w-full h-32 rounded-lg" />
+              <Skeleton key={`accordion-skeleton-${i}`} className="w-full h-32 rounded-lg" />
             ),
           )}
         </div>
