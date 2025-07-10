@@ -8,13 +8,6 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: [
-      "images.unsplash.com",
-      "res.cloudinary.com",
-      "lh3.googleusercontent.com",
-      "maps.googleapis.com",
-      // Add any other domains your images are served from
-    ],
   },
 }
 

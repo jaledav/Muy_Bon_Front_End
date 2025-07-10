@@ -2,8 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { useCallback } from "react"
+import { useRouter } from "next/navigation"
 
 interface PaginationControlsProps {
   currentPage: number
@@ -13,84 +12,94 @@ interface PaginationControlsProps {
 
 export function PaginationControls({ currentPage, totalPages, searchParams }: PaginationControlsProps) {
   const router = useRouter()
-  const pathname = usePathname()
-  const urlSearchParams = useSearchParams()
 
-  const handlePageChange = useCallback(
-    (page: number) => {
-      // Create new URLSearchParams
-      const params = new URLSearchParams(urlSearchParams.toString())
+  const createPageUrl = (page: number) => {
+    const params = new URLSearchParams()
 
-      // Set or remove page parameter
-      if (page === 1) {
-        params.delete("page")
-      } else {
-        params.set("page", page.toString())
+    // Add all existing search parameters
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value && key !== "page") {
+        if (Array.isArray(value)) {
+          params.set(key, value.join(","))
+        } else {
+          params.set(key, value)
+        }
       }
+    })
 
-      // Navigate with replace to avoid breaking back button
-      router.push(`${pathname}?${params.toString()}`, { scroll: false })
-    },
-    [router, pathname, urlSearchParams]
-  )
-
-  const getVisiblePages = () => {
-    const delta = 2
-    const pages = []
-
-    // Always show first page
-    pages.push(1)
-
-    // Add dots if needed
-    if (currentPage - delta > 2) {
-      pages.push("...")
+    // Add page parameter if not page 1
+    if (page > 1) {
+      params.set("page", page.toString())
     }
 
-    // Add pages around current page
-    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-      if (!pages.includes(i)) {
+    const queryString = params.toString()
+    return `/directory${queryString ? `?${queryString}` : ""}`
+  }
+
+  const handlePageChange = (page: number) => {
+    const url = createPageUrl(page)
+    router.push(url)
+  }
+
+  // Generate page numbers to show
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisible = 5
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
         pages.push(i)
       }
-    }
-
-    // Add dots if needed
-    if (currentPage + delta < totalPages - 1) {
-      pages.push("...")
-    }
-
-    // Always show last page
-    if (totalPages > 1 && !pages.includes(totalPages)) {
-      pages.push(totalPages)
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i)
+        }
+        pages.push("...")
+        pages.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1)
+        pages.push("...")
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i)
+        }
+      } else {
+        pages.push(1)
+        pages.push("...")
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i)
+        }
+        pages.push("...")
+        pages.push(totalPages)
+      }
     }
 
     return pages
   }
 
-  if (totalPages <= 1) {
-    return null
-  }
-
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center justify-center space-x-2">
+      {/* Previous Button */}
       <Button
         variant="outline"
         size="sm"
         onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex items-center gap-1"
+        disabled={currentPage <= 1}
+        className="flex items-center"
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft className="w-4 h-4 mr-1" />
         Previous
       </Button>
 
-      <div className="flex items-center gap-1">
-        {getVisiblePages().map((page, index) => (
-          <div key={`page-${index}`}>
+      {/* Page Numbers */}
+      <div className="flex items-center space-x-1">
+        {getPageNumbers().map((page, index) => (
+          <div key={index}>
             {page === "..." ? (
-              <span className="px-3 py-2 text-muted-foreground">...</span>
+              <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
             ) : (
               <Button
-                variant={page === currentPage ? "default" : "outline"}
+                variant={currentPage === page ? "default" : "outline"}
                 size="sm"
                 onClick={() => handlePageChange(page as number)}
                 className="min-w-[40px]"
@@ -102,15 +111,16 @@ export function PaginationControls({ currentPage, totalPages, searchParams }: Pa
         ))}
       </div>
 
+      {/* Next Button */}
       <Button
         variant="outline"
         size="sm"
         onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex items-center gap-1"
+        disabled={currentPage >= totalPages}
+        className="flex items-center"
       >
         Next
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="w-4 h-4 ml-1" />
       </Button>
     </div>
   )
