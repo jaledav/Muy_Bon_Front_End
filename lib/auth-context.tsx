@@ -3,10 +3,9 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase-client"
 
 export interface User {
-  id: string
+  id: number
   email: string
   name: string
   created_at: string
@@ -97,34 +96,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (name: string, email: string, password: string) => {
     try {
-      // First attempt the signup
-      const response = await fetch("/api/auth/signup", {
+      setIsLoading(true)
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
-      });
+      })
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+      // First check if response is ok before trying to parse JSON
+      if (!res.ok) {
+        try {
+          const contentType = res.headers.get("content-type")
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await res.json()
+            return { success: false, error: errorData.message || "Signup failed" }
+          } else {
+            // Handle non-JSON responses
+            const text = await res.text()
+            console.error("Non-JSON error response:", text.substring(0, 100) + "...")
+            return { success: false, error: `Server error: ${res.status}` }
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError)
+          return { success: false, error: `Server error: ${res.status}` }
+        }
       }
 
-      // The API route handles user creation and email sending.
-      // The user will be authenticated after verifying their email.
-      // We don't need to sign them in immediately here.
-
-      return {
-        success: true,
-        message: data.message,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message,
-      };
+      try {
+        // Only try to parse JSON for successful responses
+        const data = await res.json()
+        router.refresh() // Refresh potentially needed data
+        return { success: true, message: data.message }
+      } catch (jsonError) {
+        console.error("Error parsing JSON from successful response:", jsonError)
+        return { success: false, error: "Unexpected response from server" }
+      }
+    } catch (error) {
+      console.error("Signup error:", error)
+      return { success: false, error: "An unexpected error occurred" }
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
   const logout = async () => {
     try {

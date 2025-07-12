@@ -117,9 +117,6 @@ export async function POST(request: Request) {
           confirmationUrl // Pass the JWT link to the email template
         });
 
-        // Log the generated confirmation URL for debugging
-        console.log("Generated confirmation URL:", confirmationUrl);
-
         if (!emailResult.success) {
           console.error("Failed to send verification email via Resend:", emailResult.error);
           // Optionally, return an error here if email sending is critical

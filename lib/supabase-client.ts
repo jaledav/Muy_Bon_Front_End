@@ -18,12 +18,6 @@ export const supabase = createClient<Database>(supabaseUrl || "", supabaseAnonKe
   },
 })
 
-console.log("[Supabase Client] URL:", supabaseUrl)
-console.log(
-  "[Supabase Client] Anon Key (first 5 chars):",
-  supabaseAnonKey ? supabaseAnonKey.substring(0, 5) + "..." : "N/A",
-)
-
 export type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"]
 export type GoogleUserReview = Database["public"]["Tables"]["google_user_reviews"]["Row"]
 export type CriticReview = Database["public"]["Tables"]["critic_reviews"]["Row"]
@@ -53,7 +47,7 @@ export async function searchRestaurants(
 ): Promise<{ restaurants: Restaurant[]; totalCount: number }> {
   const page = filters.page || 1
   const limit = filters.limit || 24
-  const maxRetries = 3
+  const maxRetries = 3 // Max number of retries
   let retries = 0
 
   console.log("[searchRestaurants] Received filters:", JSON.stringify(filters, null, 2))
@@ -61,7 +55,7 @@ export async function searchRestaurants(
   while (retries < maxRetries) {
     try {
       if (retries > 0) {
-        const delay = Math.pow(2, retries) * 1000
+        const delay = Math.pow(2, retries) * 1000 // Exponential backoff: 2s, 4s, 8s
         console.log(
           `[searchRestaurants] Rate limit or error encountered. Retrying in ${delay / 1000}s (attempt ${retries + 1}/${maxRetries})`,
         )
@@ -69,8 +63,6 @@ export async function searchRestaurants(
       }
 
       let query = supabase.from("restaurants").select("*", { count: "exact" })
-
-      console.log("[searchRestaurants] Initial query object:", query)
 
       if (filters.searchTerm && filters.searchTerm.trim() !== "") {
         const searchTermPattern = `%${filters.searchTerm.trim()}%`
@@ -117,36 +109,30 @@ export async function searchRestaurants(
         console.log("[searchRestaurants] Including permanently closed restaurants.")
       }
 
-      query = query.order("total_score_gmaps", { ascending: false })
-      query = query.order("reviews_count_gmaps", { ascending: false })
+      query = query.order("total_score_gmaps", { ascending: false, nullsLast: true })
+      query = query.order("reviews_count_gmaps", { ascending: false, nullsLast: true })
 
       const offset = (page - 1) * limit
       query = query.range(offset, offset + limit - 1)
 
-      console.log("[searchRestaurants] Final query object:", query)
-
       const { data, error, count, status, statusText } = await query
 
-      console.log("[searchRestaurants] Supabase response - data:", data)
-      console.log("[searchRestaurants] Supabase response - error:", error)
-      console.log("[searchRestaurants] Supabase response - count:", count)
-      console.log("[searchRestaurants] Supabase response - status:", status)
-      console.log("[searchRestaurants] Supabase response - statusText:", statusText)
-
       if (error) {
+        // Check if the error is due to a non-JSON response that indicates a rate limit
         const errorMessage = error.message || ""
         if (
           (status === 429 ||
             errorMessage.toLowerCase().includes("too many requests") ||
             errorMessage.includes("not valid JSON")) &&
-          retries < maxRetries - 1
+          retries < maxRetries - 1 // Only retry if not on the last attempt
         ) {
           console.warn(
             `[searchRestaurants] Supabase query error (likely rate limit or non-JSON response), status: ${status}, message: ${errorMessage}. Will retry.`,
           )
           retries++
-          continue
+          continue // Go to the next iteration of the while loop to retry
         }
+        // For other errors, or if max retries reached for rate limit
         console.error(
           "[searchRestaurants] Supabase query error (non-retryable or max retries reached):",
           JSON.stringify(error, null, 2),
@@ -155,7 +141,7 @@ export async function searchRestaurants(
           "StatusText:",
           statusText,
         )
-        throw error
+        throw error // Throw to be caught by the outer catch block
       }
 
       console.log(
@@ -163,26 +149,44 @@ export async function searchRestaurants(
       )
 
       return {
+        // Success
         restaurants: (data as Restaurant[]) || [],
         totalCount: count || 0,
       }
     } catch (error: any) {
+      // Catch errors from the try block, including re-thrown ones
+      // This catch block is for errors that occur within the try, or if retries are exhausted for specific errors
+      // If it's an error that caused a retry and retries are exhausted, this will be the final catch.
       console.error(`[searchRestaurants] Error after ${retries} retries or non-retryable error:`, error.message)
+      // If we've exhausted retries, or it's a non-retryable error, break the loop and return empty.
+      // The loop condition (retries < maxRetries) will handle breaking if maxRetries is reached.
+      // If it's a different kind of error not caught by the inner if(error), it will also land here.
       if (retries >= maxRetries - 1) {
+        // If this was the last possible attempt
         console.error("[searchRestaurants] Max retries reached. Returning empty results.")
       } else {
+        // For other errors not related to rate limiting that might occur before the query
         console.error(
           "[searchRestaurants] Unhandled error in try block, returning empty results. Error:",
           error.message,
         )
       }
-      retries++
+      // To prevent infinite loops on unexpected errors, ensure retries increment or we break
+      // However, the primary retry logic is for the Supabase query error.
+      // For safety, if an error lands here and it's not the last retry, we might increment and continue,
+      // but it's better to handle specific retryable errors.
+      // For now, if an error makes it to this outer catch, we'll assume it's final for this attempt.
+      // The while loop will retry if retries < maxRetries.
+      // If the error was thrown from the inner if(error) block after max retries, this is the final stop.
+      retries++ // Ensure loop eventually terminates if an unexpected error keeps occurring
       if (retries >= maxRetries) {
         console.error("[searchRestaurants] Final attempt failed or unexpected error path. Returning empty results.")
-        return { restaurants: [], totalCount: 0 }
+        return { restaurants: [], totalCount: 0 } // Final fallback
       }
+      // If not max retries, the loop will continue.
     }
   }
+  // If loop finishes due to maxRetries, return empty
   console.warn("[searchRestaurants] Max retries reached for the operation. Returning empty results.")
   return { restaurants: [], totalCount: 0 }
 }
@@ -205,7 +209,7 @@ export async function getAllRestaurants(
       const { data, error, count, status } = await supabase
         .from("restaurants")
         .select("*", { count: "exact" })
-        .order("total_score_gmaps", { ascending: false })
+        .order("total_score_gmaps", { ascending: false, nullsLast: true })
         .range((page - 1) * limit, page * limit - 1)
 
       if (error) {
@@ -243,11 +247,6 @@ export async function getAllRestaurants(
 }
 
 export async function fetchRestaurantById(id: string): Promise<RestaurantWithReviews | null> {
-  if (!id || id.trim() === "" || id === "undefined" || id === "null") {
-    console.error("[fetchRestaurantById] Invalid ID provided:", id)
-    throw new Error("Invalid restaurant ID provided")
-  }
-
   const maxRetries = 3
   let retries = 0
   while (retries < maxRetries) {
@@ -257,110 +256,24 @@ export async function fetchRestaurantById(id: string): Promise<RestaurantWithRev
         console.log(`[fetchRestaurantById] Retrying in ${delay / 1000}s (attempt ${retries + 1}/${maxRetries})`)
         await wait(delay)
       }
-
-      console.log(`[fetchRestaurantById] Querying for ID: "${id}"`)
-
-      // First, let's check if CSE snippets exist for any restaurant
-      console.log("[fetchRestaurantById] Checking CSE snippets table...")
-      const {
-        data: cseCheck,
-        error: cseCheckError,
-        count: cseCount,
-      } = await supabase.from("cse_review_snippets").select("*", { count: "exact" }).limit(1)
-
-      console.log(`[fetchRestaurantById] CSE snippets table check - Count: ${cseCount}, Error:`, cseCheckError)
-      if (cseCheck && cseCheck.length > 0) {
-        console.log("[fetchRestaurantById] Sample CSE snippet:", cseCheck[0])
-      }
-
-      // Now let's try the main query
       const query = supabase
         .from("restaurants")
-        .select(`
-          *,
-          google_user_reviews (*),
-          critic_reviews (*),
-          cse_review_snippets (*)
-        `)
+        .select(`*, google_user_reviews (*), critic_reviews (*), cse_review_snippets (*)`)
         .eq("id", id)
-
-      console.log("[fetchRestaurantById] Main query:", query)
 
       let { data, error, status } = await query.maybeSingle()
 
-      console.log("[fetchRestaurantById] Raw data from Supabase:", data)
-      console.log("[fetchRestaurantById] Query error:", error)
-      console.log("[fetchRestaurantById] Query status:", status)
-
-      if (data) {
-        console.log("[fetchRestaurantById] Restaurant found:", data.name)
-        console.log("[fetchRestaurantById] Google reviews count:", data.google_user_reviews?.length || 0)
-        console.log("[fetchRestaurantById] Critic reviews count:", data.critic_reviews?.length || 0)
-        console.log("[fetchRestaurantById] CSE snippets count:", data.cse_review_snippets?.length || 0)
-
-        // Enhanced image debugging
-        console.log("[fetchRestaurantById] ===== IMAGE DEBUG =====")
-        console.log("[fetchRestaurantById] cover_image_url_gmaps:", data.cover_image_url_gmaps)
-        console.log("[fetchRestaurantById] image_urls_gmaps:", data.image_urls_gmaps)
-        console.log("[fetchRestaurantById] image_urls_gmaps type:", typeof data.image_urls_gmaps)
-        console.log(
-          "[fetchRestaurantById] image_urls_gmaps length:",
-          Array.isArray(data.image_urls_gmaps) ? data.image_urls_gmaps.length : "not array",
-        )
-
-        if (Array.isArray(data.image_urls_gmaps)) {
-          console.log("[fetchRestaurantById] First 3 image URLs:", data.image_urls_gmaps.slice(0, 3))
-        }
-        console.log("[fetchRestaurantById] ========================")
-
-        if (data.cse_review_snippets && data.cse_review_snippets.length > 0) {
-          console.log("[fetchRestaurantById] First CSE snippet:", data.cse_review_snippets[0])
-        } else {
-          console.log("[fetchRestaurantById] No CSE snippets found for this restaurant")
-
-          // Let's check if this restaurant has CSE snippets with a direct query
-          const { data: directCSE, error: directCSEError } = await supabase
-            .from("cse_review_snippets")
-            .select("*")
-            .eq("restaurant_id", id)
-
-          console.log("[fetchRestaurantById] Direct CSE query result:", directCSE)
-          console.log("[fetchRestaurantById] Direct CSE query error:", directCSEError)
-        }
-      }
-
       if (!data && !error) {
+        // If not found by UUID, try by Google Place ID
         console.log(`[fetchRestaurantById] Not found by ID ${id}, trying google_place_id.`)
         const gpidResult = await supabase
           .from("restaurants")
-          .select(`
-            *,
-            google_user_reviews (*),
-            critic_reviews (*),
-            cse_review_snippets (*)
-          `)
+          .select(`*, google_user_reviews (*), critic_reviews (*), cse_review_snippets (*)`)
           .eq("google_place_id", id)
           .maybeSingle()
         data = gpidResult.data
         error = gpidResult.error
         status = gpidResult.status
-
-        if (data?.cse_review_snippets) {
-          console.log("[fetchRestaurantById] CSE snippets from GPID query:", data.cse_review_snippets.length)
-        }
-
-        // Enhanced image debugging for GPID query too
-        if (data) {
-          console.log("[fetchRestaurantById] ===== IMAGE DEBUG (GPID) =====")
-          console.log("[fetchRestaurantById] cover_image_url_gmaps:", data.cover_image_url_gmaps)
-          console.log("[fetchRestaurantById] image_urls_gmaps:", data.image_urls_gmaps)
-          console.log("[fetchRestaurantById] image_urls_gmaps type:", typeof data.image_urls_gmaps)
-          console.log(
-            "[fetchRestaurantById] image_urls_gmaps length:",
-            Array.isArray(data.image_urls_gmaps) ? data.image_urls_gmaps.length : "not array",
-          )
-          console.log("[fetchRestaurantById] ===============================")
-        }
       }
 
       if (error) {
@@ -389,101 +302,13 @@ export async function fetchRestaurantById(id: string): Promise<RestaurantWithRev
       console.error(`[fetchRestaurantById] Error after ${retries} retries or non-retryable error:`, error.message)
       retries++
       if (retries >= maxRetries) {
-        console.error("[fetchRestaurantById] Final attempt failed. Throwing error.")
-        throw error
+        console.error("[fetchRestaurantById] Final attempt failed. Returning null.")
+        return null
       }
     }
   }
-  console.warn("[fetchRestaurantById] Max retries reached. Throwing error.")
-  throw new Error("Failed to fetch restaurant after maximum retries")
-}
-
-// New function to specifically test CSE snippets
-export async function testCSESnippets(restaurantId?: string): Promise<void> {
-  console.log("[testCSESnippets] Testing CSE snippets functionality...")
-
-  try {
-    // Check if table exists and has data
-    const {
-      data: allCSE,
-      error: allCSEError,
-      count,
-    } = await supabase.from("cse_review_snippets").select("*", { count: "exact" }).limit(5)
-
-    console.log(`[testCSESnippets] Total CSE snippets in database: ${count}`)
-    console.log("[testCSESnippets] Sample CSE snippets:", allCSE)
-    console.log("[testCSESnippets] Query error:", allCSEError)
-
-    if (restaurantId) {
-      // Test specific restaurant
-      const { data: specificCSE, error: specificError } = await supabase
-        .from("cse_review_snippets")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-
-      console.log(`[testCSESnippets] CSE snippets for restaurant ${restaurantId}:`, specificCSE)
-      console.log("[testCSESnippets] Specific query error:", specificError)
-    }
-
-    // Test join query
-    const { data: joinTest, error: joinError } = await supabase
-      .from("restaurants")
-      .select(`
-        id,
-        name,
-        cse_review_snippets (*)
-      `)
-      .limit(3)
-
-    console.log("[testCSESnippets] Join test results:", joinTest)
-    console.log("[testCSESnippets] Join test error:", joinError)
-  } catch (error) {
-    console.error("[testCSESnippets] Unexpected error:", error)
-  }
-}
-
-// New function to test image URLs
-export async function testImageUrls(restaurantId?: string): Promise<void> {
-  console.log("[testImageUrls] Testing image URLs functionality...")
-
-  try {
-    // Check image fields in restaurants table
-    const { data: imageTest, error: imageError } = await supabase
-      .from("restaurants")
-      .select("id, name, cover_image_url_gmaps, image_urls_gmaps")
-      .limit(5)
-
-    console.log("[testImageUrls] Sample restaurants with images:", imageTest)
-    console.log("[testImageUrls] Query error:", imageError)
-
-    if (restaurantId) {
-      // Test specific restaurant images
-      const { data: specificImages, error: specificError } = await supabase
-        .from("restaurants")
-        .select("id, name, cover_image_url_gmaps, image_urls_gmaps")
-        .eq("id", restaurantId)
-        .single()
-
-      console.log(`[testImageUrls] Images for restaurant ${restaurantId}:`, specificImages)
-      console.log("[testImageUrls] Specific query error:", specificError)
-
-      if (specificImages) {
-        console.log("[testImageUrls] Cover image URL:", specificImages.cover_image_url_gmaps)
-        console.log("[testImageUrls] Image URLs array:", specificImages.image_urls_gmaps)
-        console.log("[testImageUrls] Image URLs type:", typeof specificImages.image_urls_gmaps)
-        console.log("[testImageUrls] Is array:", Array.isArray(specificImages.image_urls_gmaps))
-
-        if (Array.isArray(specificImages.image_urls_gmaps)) {
-          console.log("[testImageUrls] Number of images:", specificImages.image_urls_gmaps.length)
-          specificImages.image_urls_gmaps.forEach((url, index) => {
-            console.log(`[testImageUrls] Image ${index + 1}:`, url)
-          })
-        }
-      }
-    }
-  } catch (error) {
-    console.error("[testImageUrls] Unexpected error:", error)
-  }
+  console.warn("[fetchRestaurantById] Max retries reached. Returning null.")
+  return null
 }
 
 export async function getRestaurantCount(): Promise<number> {
@@ -502,7 +327,7 @@ export async function getAllRestaurantsNoPagination(): Promise<Restaurant[]> {
     const { data, error } = await supabase
       .from("restaurants")
       .select("*")
-      .order("total_score_gmaps", { ascending: false })
+      .order("total_score_gmaps", { ascending: false, nullsLast: true })
     if (error) throw error
     return (data as Restaurant[]) || []
   } catch (error) {

@@ -345,206 +345,239 @@ export type Database = {
         }
         Relationships: []
       }
-      critic_reviews: {
+      google_user_reviews: {
         Row: {
-          created_at: string
           id: string
-          publication_critic: string | null
-          restaurant_id: string | null
-          review_snippet_critic: string | null
-          review_url_critic: string | null
-          reviewer_name_critic: string | null
-          stars_critic: number | null
-          summary_critic: string | null
-          updated_at: string
+          restaurant_id: string
+          gmaps_review_id: string
+          created_at: string
+          reviewer_id_gmaps: string | null
+          reviewer_name_gmaps: string | null
+          reviewer_url_gmaps: string | null
+          reviewer_photo_url_gmaps: string | null
+          reviewer_num_reviews_gmaps: number | null
+          is_local_guide_gmaps: boolean | null
+          review_text_gmaps: string | null
+          review_text_translated_gmaps: string | null
+          published_at_text_gmaps: string | null
+          published_at_date_gmaps: string | null
+          stars_gmaps: number | null
+          likes_count_gmaps: number | null
+          review_url_gmaps: string | null
+          review_origin_gmaps: string | null
+          response_from_owner_text_gmaps: string | null
+          response_from_owner_date_gmaps: string | null
+          image_urls_gmaps: string[] | null
+          context_gmaps: Json | null
+          detailed_rating_gmaps: Json | null
+          visited_in_gmaps: string | null
+          original_language_gmaps: string | null
+          translated_language_gmaps: string | null
+          gmaps_profile_scraped_at: string
         }
         Insert: {
-          created_at?: string
           id?: string
-          publication_critic?: string | null
-          restaurant_id?: string | null
-          review_snippet_critic?: string | null
-          review_url_critic?: string | null
-          reviewer_name_critic?: string | null
-          stars_critic?: number | null
-          summary_critic?: string | null
-          updated_at?: string
+          restaurant_id: string
+          gmaps_review_id: string
+          created_at?: string
+          reviewer_id_gmaps?: string | null
+          reviewer_name_gmaps?: string | null
+          reviewer_url_gmaps?: string | null
+          reviewer_photo_url_gmaps?: string | null
+          reviewer_num_reviews_gmaps?: number | null
+          is_local_guide_gmaps?: boolean | null
+          review_text_gmaps?: string | null
+          review_text_translated_gmaps?: string | null
+          published_at_text_gmaps?: string | null
+          published_at_date_gmaps?: string | null
+          stars_gmaps?: number | null
+          likes_count_gmaps?: number | null
+          review_url_gmaps?: string | null
+          review_origin_gmaps?: string | null
+          response_from_owner_text_gmaps?: string | null
+          response_from_owner_date_gmaps?: string | null
+          image_urls_gmaps?: string[] | null
+          context_gmaps?: Json | null
+          detailed_rating_gmaps?: Json | null
+          visited_in_gmaps?: string | null
+          original_language_gmaps?: string | null
+          translated_language_gmaps?: string | null
+          gmaps_profile_scraped_at: string
         }
         Update: {
-          created_at?: string
           id?: string
-          publication_critic?: string | null
-          restaurant_id?: string | null
-          review_snippet_critic?: string | null
-          review_url_critic?: string | null
-          reviewer_name_critic?: string | null
-          stars_critic?: number | null
-          summary_critic?: string | null
-          updated_at?: string
+          restaurant_id?: string
+          gmaps_review_id?: string
+          created_at?: string
+          reviewer_id_gmaps?: string | null
+          reviewer_name_gmaps?: string | null
+          reviewer_url_gmaps?: string | null
+          reviewer_photo_url_gmaps?: string | null
+          reviewer_num_reviews_gmaps?: number | null
+          is_local_guide_gmaps?: boolean | null
+          review_text_gmaps?: string | null
+          review_text_translated_gmaps?: string | null
+          published_at_text_gmaps?: string | null
+          published_at_date_gmaps?: string | null
+          stars_gmaps?: number | null
+          likes_count_gmaps?: number | null
+          review_url_gmaps?: string | null
+          review_origin_gmaps?: string | null
+          response_from_owner_text_gmaps?: string | null
+          response_from_owner_date_gmaps?: string | null
+          image_urls_gmaps?: string[] | null
+          context_gmaps?: Json | null
+          detailed_rating_gmaps?: Json | null
+          visited_in_gmaps?: string | null
+          original_language_gmaps?: string | null
+          translated_language_gmaps?: string | null
+          gmaps_profile_scraped_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "critic_reviews_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
+      }
+      critic_reviews: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          restaurant_id: string | null
+          restaurant_name_critic_source: string | null
+          location_critic_source: string | null
+          summary_critic: string | null
+          reviewer_critic: string | null
+          publication_critic: string | null
+          vibe_critic: string[] | null
+          sentiment_critic: string | null
+          sentiment_reason_critic: string | null
+          sentiment_confidence_critic: string | null
+          review_snippet_critic: string | null
+          popular_menu_items_critic: string[] | null
+          other_details_critic: string | null
+          review_date_critic: string | null
+          review_url_critic: string
+          needs_manual_review_dq: boolean | null
+          google_place_id_from_critic_src: string | null
+          google_place_name_api_dq: string | null
+          name_match_score_to_google_dq: number | null
+          place_id_confidence_dq: string | null
+          review_processing_reasons_dq: string[] | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          restaurant_id?: string | null
+          restaurant_name_critic_source?: string | null
+          location_critic_source?: string | null
+          summary_critic?: string | null
+          reviewer_critic?: string | null
+          publication_critic?: string | null
+          vibe_critic?: string[] | null
+          sentiment_critic?: string | null
+          sentiment_reason_critic?: string | null
+          sentiment_confidence_critic?: string | null
+          review_snippet_critic?: string | null
+          popular_menu_items_critic?: string[] | null
+          other_details_critic?: string | null
+          review_date_critic?: string | null
+          review_url_critic: string
+          needs_manual_review_dq?: boolean | null
+          google_place_id_from_critic_src?: string | null
+          google_place_name_api_dq?: string | null
+          name_match_score_to_google_dq?: number | null
+          place_id_confidence_dq?: string | null
+          review_processing_reasons_dq?: string[] | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          restaurant_id?: string | null
+          restaurant_name_critic_source?: string | null
+          location_critic_source?: string | null
+          summary_critic?: string | null
+          reviewer_critic?: string | null
+          publication_critic?: string | null
+          vibe_critic?: string[] | null
+          sentiment_critic?: string | null
+          sentiment_reason_critic?: string | null
+          sentiment_confidence_critic?: string | null
+          review_snippet_critic?: string | null
+          popular_menu_items_critic?: string[] | null
+          other_details_critic?: string | null
+          review_date_critic?: string | null
+          review_url_critic?: string
+          needs_manual_review_dq?: boolean | null
+          google_place_id_from_critic_src?: string | null
+          google_place_name_api_dq?: string | null
+          name_match_score_to_google_dq?: number | null
+          place_id_confidence_dq?: string | null
+          review_processing_reasons_dq?: string[] | null
+        }
       }
       cse_review_snippets: {
         Row: {
-          created_at: string
-          domain_cse: string | null
           id: string
+          created_at: string
+          restaurant_id: string
+          url: string
+          title: string | null
+          html_title_cse: string | null
+          snippet_text_cse: string | null
           publication_cse: string | null
-          restaurant_id: string | null
-          review_snippet_cse: string | null
-          review_url_cse: string | null
-          reviewer_name_cse: string | null
-          stars_cse: number | null
-          updated_at: string
+          domain_cse: string | null
+          og_description_cse: string | null
+          article_published_date_cse: string | null
+          formatted_url_cse: string | null
+          html_formatted_url_cse: string | null
+          full_pagemap_cse: Json | null
+          restaurant_name_searched_cse: string | null
+          location_searched_cse: string | null
+          input_google_place_id_cse_search: string | null
+          input_source_url_cse_trigger: string | null
+          search_timestamp_cse: string | null
         }
         Insert: {
-          created_at?: string
-          domain_cse?: string | null
           id?: string
+          created_at?: string
+          restaurant_id: string
+          url: string
+          title?: string | null
+          html_title_cse?: string | null
+          snippet_text_cse?: string | null
           publication_cse?: string | null
-          restaurant_id?: string | null
-          review_snippet_cse?: string | null
-          review_url_cse?: string | null
-          reviewer_name_cse?: string | null
-          stars_cse?: number | null
-          updated_at?: string
+          domain_cse?: string | null
+          og_description_cse?: string | null
+          article_published_date_cse?: string | null
+          formatted_url_cse?: string | null
+          html_formatted_url_cse?: string | null
+          full_pagemap_cse?: Json | null
+          restaurant_name_searched_cse?: string | null
+          location_searched_cse?: string | null
+          input_google_place_id_cse_search?: string | null
+          input_source_url_cse_trigger?: string | null
+          search_timestamp_cse?: string | null
         }
         Update: {
-          created_at?: string
-          domain_cse?: string | null
           id?: string
-          publication_cse?: string | null
-          restaurant_id?: string | null
-          review_snippet_cse?: string | null
-          review_url_cse?: string | null
-          reviewer_name_cse?: string | null
-          stars_cse?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cse_review_snippets_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      favorites: {
-        Row: {
-          created_at: string
-          id: string
-          restaurant_id: string
-          user_id: string
-        }
-        Insert: {
           created_at?: string
-          id?: string
-          restaurant_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
           restaurant_id?: string
-          user_id?: string
+          url?: string
+          title?: string | null
+          html_title_cse?: string | null
+          snippet_text_cse?: string | null
+          publication_cse?: string | null
+          domain_cse?: string | null
+          og_description_cse?: string | null
+          article_published_date_cse?: string | null
+          formatted_url_cse?: string | null
+          html_formatted_url_cse?: string | null
+          full_pagemap_cse?: Json | null
+          restaurant_name_searched_cse?: string | null
+          location_searched_cse?: string | null
+          input_google_place_id_cse_search?: string | null
+          input_source_url_cse_trigger?: string | null
+          search_timestamp_cse?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "favorites_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      google_user_reviews: {
-        Row: {
-          created_at: string
-          gmaps_review_id: string | null
-          id: string
-          published_at_text_gmaps: string | null
-          restaurant_id: string | null
-          review_text_gmaps: string | null
-          reviewer_name_gmaps: string | null
-          stars_gmaps: number | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          gmaps_review_id?: string | null
-          id?: string
-          published_at_text_gmaps?: string | null
-          restaurant_id?: string | null
-          review_text_gmaps?: string | null
-          reviewer_name_gmaps?: string | null
-          stars_gmaps?: number | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          gmaps_review_id?: string | null
-          id?: string
-          published_at_text_gmaps?: string | null
-          restaurant_id?: string | null
-          review_text_gmaps?: string | null
-          reviewer_name_gmaps?: string | null
-          stars_gmaps?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "google_user_reviews_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      users: {
-        Row: {
-          created_at: string
-          email: string
-          email_verified: boolean | null
-          id: string
-          name: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          email_verified?: boolean | null
-          id?: string
-          name?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          email_verified?: boolean | null
-          id?: string
-          name?: string | null
-          updated_at?: string
-        }
-        Relationships: []
       }
     }
     Views: {

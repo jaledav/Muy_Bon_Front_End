@@ -95,20 +95,20 @@ export default function FavoritesPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (restaurant) =>
-          restaurant.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          restaurant.location_description_gmaps?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (restaurant.description_gmaps && restaurant.description_gmaps.toLowerCase().includes(searchQuery.toLowerCase())),
+          restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          restaurant.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (restaurant.description && restaurant.description.toLowerCase().includes(searchQuery.toLowerCase())),
       )
     }
 
     if (selectedFilter) {
       if (selectedFilter.startsWith("location:")) {
         const location = selectedFilter.replace("location:", "")
-        filtered = filtered.filter((restaurant) => restaurant.location_description_gmaps?.toLowerCase() === location.toLowerCase())
+        filtered = filtered.filter((restaurant) => restaurant.location.toLowerCase() === location.toLowerCase())
       } else if (selectedFilter.startsWith("vibe:")) {
         const vibe = selectedFilter.replace("vibe:", "")
         filtered = filtered.filter(
-          (restaurant) => restaurant.vibes_gmaps && restaurant.vibes_gmaps.some((v) => v.toLowerCase() === vibe.toLowerCase()),
+          (restaurant) => restaurant.vibes && restaurant.vibes.some((v) => v.toLowerCase() === vibe.toLowerCase()),
         )
       }
     }
@@ -116,7 +116,7 @@ export default function FavoritesPage() {
     setFilteredFavorites(filtered)
   }, [favorites, searchQuery, selectedFilter])
 
-  const handleRemoveFavorite = async (restaurantId: string) => {
+  const handleRemoveFavorite = async (restaurantId: number) => {
     if (!user) return
 
     try {
@@ -149,8 +149,8 @@ export default function FavoritesPage() {
   }
 
   // Get unique locations and vibes for filters
-  const locations = [...new Set(favorites.map((restaurant) => restaurant.location_description_gmaps).filter(Boolean))] // Filter out null/undefined
-  const vibes = [...new Set(favorites.flatMap((restaurant) => restaurant.vibes_gmaps || []))]
+  const locations = [...new Set(favorites.map((restaurant) => restaurant.location))]
+  const vibes = [...new Set(favorites.flatMap((restaurant) => restaurant.vibes || []))]
 
   if (!isLoading && !user) {
     redirect("/login?redirect=/favorites")
@@ -342,73 +342,69 @@ function RestaurantCard({ restaurant, onRemove, onFilterLocation, onFilterVibe }
     <Card className="overflow-hidden">
       <div className="relative h-48">
         <Image
-          src={restaurant.cover_image_url_gmaps || "/placeholder.svg?height=300&width=400"}
-          alt={restaurant.name || "Restaurant image"}
+          src={restaurant.cover_image_url || "/placeholder.svg?height=300&width=400"}
+          alt={restaurant.name}
           fill
           className="object-cover"
         />
-        {/* Remove button remains inside the card */}
         <button
           onClick={(e) => {
-            e.preventDefault(); // Prevent default button behavior
-            e.stopPropagation(); // Stop event from propagating
-            onRemove();
+            e.preventDefault()
+            onRemove()
           }}
-          className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full hover:bg-white z-10"
+          className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full hover:bg-white"
         >
           <Heart className="w-4 h-4 text-red-500 fill-red-500" />
         </button>
       </div>
 
       <CardContent className="p-4">
-        {/* Main content wrapped in Link */}
         <Link href={`/restaurant/${restaurant.id}`} className="block">
           <h3 className="text-lg font-semibold font-playfair mb-1">{restaurant.name}</h3>
 
           <div className="flex items-center mb-2">
-            {/* Location and Rating */}
-            <div className="flex items-center text-sm text-muted-foreground">
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                onFilterLocation()
+              }}
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+            >
               <MapPin className="w-3.5 h-3.5 mr-1" />
-              {restaurant.location_description_gmaps}
-            </div>
+              {restaurant.location}
+            </button>
             <div className="mx-2">•</div>
             <div className="flex items-center">
               <Star className="w-3.5 h-3.5 mr-1 text-yellow-400" />
-              <span className="text-sm">{restaurant.total_score_gmaps?.toFixed(1) || "4.5"}</span>
+              <span className="text-sm">{restaurant.total_score?.toFixed(1) || "4.5"}</span>
             </div>
           </div>
 
-          <p className="text-sm line-clamp-2 text-muted-foreground">{restaurant.description_gmaps}</p>
+          <div className="flex flex-wrap gap-1 mb-3">
+            {restaurant.vibes &&
+              restaurant.vibes.map((vibe) => (
+                <button
+                  key={vibe}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onFilterVibe(vibe)
+                  }}
+                  className="inline-flex items-center border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                >
+                  {vibe}
+                </button>
+              ))}
+          </div>
+
+          <p className="text-sm line-clamp-2 text-muted-foreground">{restaurant.description}</p>
+
+          <div className="mt-4 flex justify-between items-center">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/restaurant/${restaurant.id}`}>View Details</Link>
+            </Button>
+            <span className="text-xs text-muted-foreground">Saved on {new Date().toLocaleDateString()}</span>
+          </div>
         </Link>
-
-        {/* Filter elements and View Details button are outside the main Link */}
-        <div className="flex flex-wrap gap-1 mb-3 mt-2">
-          {restaurant.vibes_gmaps &&
-            restaurant.vibes_gmaps.map((vibe: string) => (
-              <div // Changed from button to div
-                key={vibe}
-                onClick={(e) => {
-                  e.preventDefault(); // Prevent default behavior
-                  e.stopPropagation(); // Stop event from propagating
-                  onFilterVibe(vibe);
-                }}
-                className="inline-flex items-center border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-full px-2.5 py-0.5 text-xs font-semibold cursor-pointer" // Added cursor-pointer
-              >
-                {vibe}
-              </div>
-            ))}
-        </div>
-
-        <div className="mt-4 flex justify-between items-center">
-          {/* Replaced Button with Link styled as a button */}
-          <Link
-            href={`/restaurant/${restaurant.id}`}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3" // Added button styling classes
-          >
-            View Details
-          </Link>
-          <span className="text-xs text-muted-foreground">Saved on {new Date().toLocaleDateString()}</span>
-        </div>
       </CardContent>
     </Card>
   )
