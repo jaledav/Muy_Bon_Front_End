@@ -94,7 +94,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
   if (useLowBandwidth || validImages.length === 0) {
     return (
       <Image
-        src={getSrc() || "/placeholder.svg"}
+        src={getSrc()}
         alt={altText}
         fill
         className="object-cover dark:opacity-80"
@@ -107,7 +107,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
   if (validImages.length === 1) {
     return (
       <Image
-        src={getSrc(validImages[0]) || "/placeholder.svg"}
+        src={getSrc(validImages[0])}
         alt={`${altText} 1`}
         fill
         className="object-cover dark:opacity-80"
@@ -122,20 +122,22 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
       <div className="grid grid-cols-2 h-full">
         <div className="relative h-full">
           <Image
-            src={getSrc(validImages[0]) || "/placeholder.svg"}
+            src={getSrc(validImages[0])}
             alt={`${altText} 1`}
             fill
             className="object-cover dark:opacity-80"
             sizes="50vw"
+            priority
           />
         </div>
         <div className="relative h-full">
           <Image
-            src={getSrc(validImages[1]) || "/placeholder.svg"}
+            src={getSrc(validImages[1])}
             alt={`${altText} 2`}
             fill
             className="object-cover dark:opacity-80"
             sizes="50vw"
+            priority
           />
         </div>
       </div>
@@ -147,30 +149,33 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
       <div className="grid grid-cols-3 h-full">
         <div className="relative col-span-2 h-full">
           <Image
-            src={getSrc(validImages[0]) || "/placeholder.svg"}
+            src={getSrc(validImages[0])}
             alt={`${altText} 1`}
             fill
             className="object-cover dark:opacity-80"
             sizes="66vw"
+            priority
           />
         </div>
         <div className="grid grid-rows-2 col-span-1 h-full">
           <div className="relative h-full">
             <Image
-              src={getSrc(validImages[1]) || "/placeholder.svg"}
+              src={getSrc(validImages[1])}
               alt={`${altText} 2`}
               fill
               className="object-cover dark:opacity-80"
               sizes="33vw"
+              priority
             />
           </div>
           <div className="relative h-full">
             <Image
-              src={getSrc(validImages[2]) || "/placeholder.svg"}
+              src={getSrc(validImages[2])}
               alt={`${altText} 3`}
               fill
               className="object-cover dark:opacity-80"
               sizes="33vw"
+              priority
             />
           </div>
         </div>
@@ -183,11 +188,12 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
       {validImages.slice(0, 4).map((img, idx) => (
         <div key={`hero-${idx}`} className="relative h-full">
           <Image
-            src={getSrc(img) || "/placeholder.svg"}
+            src={getSrc(img)}
             alt={`${altText} ${idx + 1}`}
             fill
             className="object-cover dark:opacity-80"
             sizes="50vw"
+            priority={idx < 2}
           />
         </div>
       ))}
@@ -412,6 +418,7 @@ export default function RestaurantPage() {
           <div className="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
             {total_score_gmaps && reviews_count_gmaps && (
               <QuickPulseChip
+                key={`pulse-rating-${id}`}
                 icon={<Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
                 label={`${total_score_gmaps.toFixed(1)} (${reviews_count_gmaps.toLocaleString()})`}
                 onClick={() => scrollToRef(reviewsRef, "reviews")}
@@ -422,7 +429,7 @@ export default function RestaurantPage() {
               vibes_gmaps.length > 0 &&
               vibes_gmaps.map((vibe, index) => (
                 <QuickPulseChip
-                  key={`vibe-${index}`}
+                  key={`vibe-${index}-${id}`}
                   icon={<Sparkles className="w-4 h-4" />}
                   label={vibe}
                   onClick={() => scrollToRef(aboutRef, "about")}
@@ -430,6 +437,7 @@ export default function RestaurantPage() {
               ))}
             {price_range_gmaps && (
               <QuickPulseChip
+                key={`pulse-price-${id}`}
                 icon={<Tag className="w-4 h-4" />}
                 label={price_range_gmaps}
                 onClick={() => scrollToRef(aboutRef, "about")}
@@ -450,6 +458,7 @@ export default function RestaurantPage() {
               className="w-full space-y-4"
             >
               <AccordionItem
+                key="about"
                 value="about"
                 ref={aboutRef}
                 className="border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800"
@@ -484,13 +493,7 @@ export default function RestaurantPage() {
                               <CardContent className="p-0">
                                 <div className="relative aspect-video">
                                   <Image
-                                    src={
-                                      place.cover_image_url ||
-                                      "/placeholder.svg?height=180&width=320&query=similar+restaurant" ||
-                                      "/placeholder.svg" ||
-                                      "/placeholder.svg" ||
-                                      "/placeholder.svg"
-                                    }
+                                    src={place.cover_image_url || "/placeholder.svg?height=180&width=320&query=similar+restaurant"}
                                     alt={place.name || "Similar restaurant"}
                                     fill
                                     className="object-cover rounded-t-md"
@@ -520,10 +523,7 @@ export default function RestaurantPage() {
                                     <Image
                                       src={
                                         place.cover_image_url ||
-                                        "/placeholder.svg?height=180&width=320&query=similar+restaurant" ||
-                                        "/placeholder.svg" ||
-                                        "/placeholder.svg" ||
-                                        "/placeholder.svg"
+                                        "/placeholder.svg?height=180&width=320&query=similar+restaurant"
                                       }
                                       alt={place.name || "Similar restaurant"}
                                       fill
@@ -544,6 +544,7 @@ export default function RestaurantPage() {
               </AccordionItem>
 
               <AccordionItem
+                key="openingTimes"
                 value="openingTimes"
                 ref={openingTimesRef}
                 className="border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800"
@@ -611,6 +612,7 @@ export default function RestaurantPage() {
 
               {galleryImages.length > 0 && !useLowBandwidth && (
                 <AccordionItem
+                  key="gallery"
                   value="gallery"
                   ref={galleryRef}
                   className="border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800"
@@ -641,6 +643,7 @@ export default function RestaurantPage() {
 
               {hasAnyReviews && (
                 <AccordionItem
+                  key="reviews"
                   value="reviews"
                   ref={reviewsRef}
                   className="border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800"
