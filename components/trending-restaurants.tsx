@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp } from "lucide-react"
 import Link from "next/link"
+import { getRandomPlaceholder } from "@/lib/utils"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 
 // This would normally be fetched from your Xano database
 const trendingRestaurants = [
@@ -10,7 +12,7 @@ const trendingRestaurants = [
     id: 4,
     name: "Cadet",
     location: "Newington Green",
-    image: "/placeholder.svg?height=300&width=400",
+    image: getRandomPlaceholder(),
     price: "£££",
     vibes: ["Wine Bar", "Small Plates", "Cozy"],
     description: "New wine bar from the team behind Jolene, focusing on natural wines and seasonal small plates.",
@@ -19,7 +21,7 @@ const trendingRestaurants = [
     id: 5,
     name: "Planque",
     location: "Haggerston",
-    image: "/placeholder.svg?height=300&width=400",
+    image: getRandomPlaceholder(),
     price: "£££",
     vibes: ["Wine Library", "Modern French", "Cool"],
     description: "Part wine library, part restaurant, serving creative French-inspired dishes in a stylish space.",
@@ -28,7 +30,7 @@ const trendingRestaurants = [
     id: 6,
     name: "Supa Ya Ramen",
     location: "Hackney",
-    image: "/placeholder.svg?height=300&width=400",
+    image: getRandomPlaceholder(),
     price: "££",
     vibes: ["Casual", "Innovative", "Fun"],
     description: "Cult ramen spot known for creative, non-traditional bowls and a playful approach.",
@@ -47,8 +49,8 @@ export default function TrendingRestaurants() {
           <Link key={restaurant.id} href={`/restaurant/${restaurant.id}`} className="block">
             <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
               <div className="relative h-48">
-                <Image
-                  src={restaurant.image || "/placeholder.svg"}
+                <ImageWithFallback
+                  src={restaurant.image}
                   alt={restaurant.name}
                   fill
                   className="object-cover"

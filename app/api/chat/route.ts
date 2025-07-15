@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai"
 import { generateText } from "ai"
 import { searchRestaurants } from "@/lib/xano-api"
 import type { Restaurant, XanoSearchFilters } from "@/lib/types"
+import { getRandomPlaceholder } from "@/lib/utils"
 
 // Define the structure for our parsed filters
 interface ParsedFilters {
@@ -129,7 +130,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 1,
       name: "The Clove Club",
       location: "Shoreditch",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "££££",
       vibes: ["Fine Dining", "Tasting Menu", "Modern British"],
       description: "Michelin-starred restaurant in Shoreditch Town Hall serving innovative British cuisine.",
@@ -140,7 +141,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 2,
       name: "Brat",
       location: "Shoreditch",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "£££",
       vibes: ["Buzzy", "Wood-fired", "Basque"],
       description: "Michelin-starred spot known for wood-fired cooking and excellent seafood.",
@@ -151,7 +152,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 3,
       name: "Lyle's",
       location: "Shoreditch",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "£££",
       vibes: ["Minimalist", "Seasonal", "Modern British"],
       description: "Michelin-starred restaurant with a daily changing menu of seasonal British food.",
@@ -162,7 +163,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 4,
       name: "Cadet",
       location: "Newington Green",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "£££",
       vibes: ["Wine Bar", "Small Plates", "Cozy"],
       description: "New wine bar from the team behind Jolene, focusing on natural wines and seasonal small plates.",
@@ -173,7 +174,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 5,
       name: "Planque",
       location: "Haggerston",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "£££",
       vibes: ["Wine Library", "Modern French", "Cool"],
       description: "Part wine library, part restaurant, serving creative French-inspired dishes in a stylish space.",
@@ -184,7 +185,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 6,
       name: "Supa Ya Ramen",
       location: "Hackney",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "££",
       vibes: ["Casual", "Innovative", "Fun"],
       description: "Cult ramen spot known for creative, non-traditional bowls and a playful approach.",
@@ -195,7 +196,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 7,
       name: "Bright",
       location: "Hackney",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "£££",
       vibes: ["Romantic", "Wine Bar", "Modern European"],
       description: "Intimate setting with exceptional seasonal dishes and natural wines.",
@@ -206,7 +207,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 8,
       name: "Jolene",
       location: "Newington Green",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "££",
       vibes: ["Cozy", "Neighborhood", "Seasonal"],
       description: "Beloved neighborhood spot with excellent baked goods and seasonal cooking.",
@@ -217,7 +218,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 9,
       name: "Mangal 2",
       location: "Dalston",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "££",
       vibes: ["Turkish", "Grill", "Family-run"],
       description: "Legendary Turkish grill with a modern twist, known for excellent kebabs and mezze.",
@@ -228,7 +229,7 @@ function simulateXanoSearch(filters: ParsedFilters): Restaurant[] {
       id: 10,
       name: "Fonda",
       location: "Regent Street",
-      image: "/placeholder.svg?height=300&width=400",
+      image: getRandomPlaceholder(),
       price: "£££",
       vibes: ["Sophisticated", "Relaxed", "Mexican"],
       description:

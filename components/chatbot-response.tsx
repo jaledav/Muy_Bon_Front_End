@@ -2,6 +2,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { getRandomPlaceholder } from "@/lib/utils"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 
 interface Restaurant {
   id: number
@@ -35,8 +37,8 @@ export function ChatbotResponse({ response, restaurants }: ChatbotResponseProps)
           <Link key={restaurant.id} href={`/restaurant/${restaurant.id}`} className="block">
             <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
               <div className="relative h-48">
-                <Image
-                  src={restaurant.image || "/placeholder.svg"}
+                <ImageWithFallback
+                  src={restaurant.image || getRandomPlaceholder()}
                   alt={restaurant.name}
                   fill
                   className="object-cover"

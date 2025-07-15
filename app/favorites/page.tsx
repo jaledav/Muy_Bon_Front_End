@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Loader2, Heart, Search, MapPin, Star, Calendar, Filter, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase, type Restaurant } from "@/lib/supabase-client"
+import { getRandomPlaceholder } from "@/lib/utils"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 
 export default function FavoritesPage() {
   const { user, isLoading } = useAuth()
@@ -341,8 +343,8 @@ function RestaurantCard({ restaurant, onRemove, onFilterLocation, onFilterVibe }
   return (
     <Card className="overflow-hidden">
       <div className="relative h-48">
-        <Image
-          src={restaurant.cover_image_url || "/placeholder.svg?height=300&width=400"}
+        <ImageWithFallback
+          src={restaurant.cover_image_url || getRandomPlaceholder()}
           alt={restaurant.name}
           fill
           className="object-cover"

@@ -2,6 +2,8 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { getRandomPlaceholder } from "@/lib/utils"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 
 // This would normally be fetched from your Xano database
 const featuredRestaurants = [
@@ -9,7 +11,7 @@ const featuredRestaurants = [
     id: 1,
     name: "The Clove Club",
     location: "Shoreditch",
-    image: "/placeholder.svg?height=300&width=400",
+    image: getRandomPlaceholder(),
     price: "££££",
     vibes: ["Fine Dining", "Tasting Menu", "Modern British"],
     description: "Michelin-starred restaurant in Shoreditch Town Hall serving innovative British cuisine.",
@@ -18,7 +20,7 @@ const featuredRestaurants = [
     id: 2,
     name: "Brat",
     location: "Shoreditch",
-    image: "/placeholder.svg?height=300&width=400",
+    image: getRandomPlaceholder(),
     price: "£££",
     vibes: ["Buzzy", "Wood-fired", "Basque"],
     description: "Michelin-starred spot known for wood-fired cooking and excellent seafood.",
@@ -27,7 +29,7 @@ const featuredRestaurants = [
     id: 3,
     name: "Lyle's",
     location: "Shoreditch",
-    image: "/placeholder.svg?height=300&width=400",
+    image: getRandomPlaceholder(),
     price: "£££",
     vibes: ["Minimalist", "Seasonal", "Modern British"],
     description: "Michelin-starred restaurant with a daily changing menu of seasonal British food.",
@@ -43,8 +45,8 @@ export default function FeaturedRestaurants() {
           <Link key={restaurant.id} href={`/restaurant/${restaurant.id}`} className="block">
             <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
               <div className="relative h-48">
-                <Image
-                  src={restaurant.image || "/placeholder.svg"}
+                <ImageWithFallback
+                  src={restaurant.image}
                   alt={restaurant.name}
                   fill
                   className="object-cover"

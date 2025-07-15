@@ -37,8 +37,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 import PopularTimesChart from "@/components/popular-times-chart"
-import { cn } from "@/lib/utils"
+import { cn, getBestRestaurantImage, getRandomPlaceholder } from "@/lib/utils"
 
 interface SimilarPlace {
   id: string
@@ -50,6 +51,8 @@ interface SimilarPlace {
 interface RestaurantWithDetails extends Omit<RestaurantWithReviews, 'people_also_search_gmaps'> {
   people_also_search_gmaps?: SimilarPlace[] | null
 }
+
+
 
 const findSimilarByVibe = (
   currentRestaurantVibes: string[] | null | undefined,
@@ -86,14 +89,14 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
   useLowBandwidth,
 }) => {
   const validImages = images.filter(Boolean)
-  const placeholder = "/placeholder.svg?height=600&width=800"
-  const lowBandwidthPlaceholder = "/placeholder.svg?height=400&width=600"
+  const placeholder = getRandomPlaceholder()
+  const lowBandwidthPlaceholder = getRandomPlaceholder()
 
   const getSrc = (url?: string) => (useLowBandwidth ? lowBandwidthPlaceholder : url || placeholder)
 
   if (useLowBandwidth || validImages.length === 0) {
     return (
-      <Image
+      <ImageWithFallback
         src={getSrc()}
         alt={altText}
         fill
@@ -106,7 +109,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
 
   if (validImages.length === 1) {
     return (
-      <Image
+      <ImageWithFallback
         src={getSrc(validImages[0])}
         alt={`${altText} 1`}
         fill
@@ -121,7 +124,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
     return (
       <div className="grid grid-cols-2 h-full">
         <div className="relative h-full">
-          <Image
+          <ImageWithFallback
             src={getSrc(validImages[0])}
             alt={`${altText} 1`}
             fill
@@ -131,7 +134,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
           />
         </div>
         <div className="relative h-full">
-          <Image
+          <ImageWithFallback
             src={getSrc(validImages[1])}
             alt={`${altText} 2`}
             fill
@@ -148,7 +151,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
     return (
       <div className="grid grid-cols-3 h-full">
         <div className="relative col-span-2 h-full">
-          <Image
+          <ImageWithFallback
             src={getSrc(validImages[0])}
             alt={`${altText} 1`}
             fill
@@ -159,7 +162,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
         </div>
         <div className="grid grid-rows-2 col-span-1 h-full">
           <div className="relative h-full">
-            <Image
+            <ImageWithFallback
               src={getSrc(validImages[1])}
               alt={`${altText} 2`}
               fill
@@ -169,7 +172,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
             />
           </div>
           <div className="relative h-full">
-            <Image
+            <ImageWithFallback
               src={getSrc(validImages[2])}
               alt={`${altText} 3`}
               fill
@@ -187,7 +190,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
     <div className="grid grid-cols-2 grid-rows-2 h-full">
       {validImages.slice(0, 4).map((img, idx) => (
         <div key={`hero-${idx}`} className="relative h-full">
-          <Image
+          <ImageWithFallback
             src={getSrc(img)}
             alt={`${altText} ${idx + 1}`}
             fill
@@ -342,7 +345,7 @@ export default function RestaurantPage() {
       ? image_urls_gmaps
       : cover_image_url_gmaps
         ? [cover_image_url_gmaps]
-        : []
+        : [getBestRestaurantImage(restaurant)]
 
   const galleryImages = image_urls_gmaps?.slice(0, 12) || []
   const hasGoogleReviews = google_user_reviews && google_user_reviews.length > 0
@@ -418,7 +421,7 @@ export default function RestaurantPage() {
           <div className="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
             {total_score_gmaps && reviews_count_gmaps && (
               <QuickPulseChip
-                key={`pulse-rating-${id}`}
+                key={`pulse-rating-${id || 'loading'}`}
                 icon={<Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
                 label={`${total_score_gmaps.toFixed(1)} (${reviews_count_gmaps.toLocaleString()})`}
                 onClick={() => scrollToRef(reviewsRef, "reviews")}
@@ -429,7 +432,7 @@ export default function RestaurantPage() {
               vibes_gmaps.length > 0 &&
               vibes_gmaps.map((vibe, index) => (
                 <QuickPulseChip
-                  key={`vibe-${index}-${id}`}
+                  key={`vibe-${index}-${id || 'loading'}`}
                   icon={<Sparkles className="w-4 h-4" />}
                   label={vibe}
                   onClick={() => scrollToRef(aboutRef, "about")}
@@ -437,7 +440,7 @@ export default function RestaurantPage() {
               ))}
             {price_range_gmaps && (
               <QuickPulseChip
-                key={`pulse-price-${id}`}
+                key={`pulse-price-${id || 'loading'}`}
                 icon={<Tag className="w-4 h-4" />}
                 label={price_range_gmaps}
                 onClick={() => scrollToRef(aboutRef, "about")}
@@ -476,7 +479,7 @@ export default function RestaurantPage() {
                       <h4 className="font-semibold mb-2">Vibes</h4>
                       <div className="flex flex-wrap gap-2">
                         {vibes_gmaps.map((vibe, index) => (
-                          <Badge key={`${vibe}-${index}`} variant="secondary">
+                          <Badge key={`vibe-badge-${index}-${vibe}`} variant="secondary">
                             {vibe}
                           </Badge>
                         ))}
@@ -487,13 +490,13 @@ export default function RestaurantPage() {
                     <div className="pt-4 mt-4 border-t dark:border-gray-700">
                       <h4 className="font-semibold mb-3 text-lg">You Might Also Like (Similar Vibes)</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {similarPlacesByVibe.map((place) => (
-                          <Link key={place.id} href={`/restaurant/${place.id}`} passHref>
+                        {similarPlacesByVibe.map((place, idx) => (
+                          <Link key={place.id || idx} href={`/restaurant/${place.id}`} passHref>
                             <Card className="h-full hover:shadow-lg transition-shadow">
                               <CardContent className="p-0">
                                 <div className="relative aspect-video">
-                                  <Image
-                                    src={place.cover_image_url || "/placeholder.svg?height=180&width=320&query=similar+restaurant"}
+                                  <ImageWithFallback
+                                    src={place.cover_image_url || getRandomPlaceholder()}
                                     alt={place.name || "Similar restaurant"}
                                     fill
                                     className="object-cover rounded-t-md"
@@ -515,15 +518,15 @@ export default function RestaurantPage() {
                       <div className="pt-4 mt-4 border-t dark:border-gray-700">
                         <h4 className="font-semibold mb-3 text-lg">You Might Also Like</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                          {people_also_search_gmaps.slice(0, 3).map((place) => (
-                            <Link key={place.id} href={`/restaurant/${place.id}`} passHref>
+                          {people_also_search_gmaps.slice(0, 3).map((place, idx) => (
+                            <Link key={place.id || idx} href={`/restaurant/${place.id}`} passHref>
                               <Card className="h-full hover:shadow-lg transition-shadow">
                                 <CardContent className="p-0">
                                   <div className="relative aspect-video">
-                                    <Image
+                                    <ImageWithFallback
                                       src={
                                         place.cover_image_url ||
-                                        "/placeholder.svg?height=180&width=320&query=similar+restaurant"
+                                        getRandomPlaceholder()
                                       }
                                       alt={place.name || "Similar restaurant"}
                                       fill
@@ -626,9 +629,9 @@ export default function RestaurantPage() {
                   <AccordionContent className="px-6 pb-6 pt-2">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {galleryImages.map((imgUrl, idx) => (
-                        <div key={`gallery-${idx}`} className="relative aspect-square rounded-md overflow-hidden">
-                          <Image
-                            src={imgUrl || "/placeholder.svg"}
+                        <div key={`gallery-${idx}-${imgUrl}`} className="relative aspect-square rounded-md overflow-hidden">
+                          <ImageWithFallback
+                            src={imgUrl || getRandomPlaceholder()}
                             alt={`${name} gallery image ${idx + 1}`}
                             fill
                             className="object-cover hover:scale-105 transition-transform"
@@ -670,12 +673,12 @@ export default function RestaurantPage() {
                         <TabsContent value="critics" className="space-y-4">
                           <h3 className="text-xl font-semibold mt-2">Critic Reviews</h3>
                           {critic_reviews &&
-                            critic_reviews.map((review) => (
-                              <ReviewCard key={`critic-${review.id}`} review={review} type="critic" />
+                            critic_reviews.map((review, idx) => (
+                              <ReviewCard key={`critic-${review.id || idx}`} review={review} type="critic" />
                             ))}
                           {filteredCseSnippets &&
-                            filteredCseSnippets.map((snippet) => (
-                              <ReviewCard key={`cse-${snippet.id}`} review={snippet} type="cse" />
+                            filteredCseSnippets.map((snippet, idx) => (
+                              <ReviewCard key={`cse-${snippet.id || idx}`} review={snippet} type="cse" />
                             ))}
                         </TabsContent>
                       )}
