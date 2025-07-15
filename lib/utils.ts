@@ -32,11 +32,5 @@ export function getBestRestaurantImage(restaurant: {
 }
 
 export function getRandomPlaceholder() {
-  const placeholders = [
-    "/placeholder1.svg",
-    "/placeholder2.svg",
-    "/placeholder3.svg",
-    "/placeholder4.svg",
-  ];
-  return placeholders[Math.floor(Math.random() * placeholders.length)];
+  return "/placeholder.png";
 }

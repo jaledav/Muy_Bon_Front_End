@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { getRandomPlaceholder } from "@/lib/utils"
 
-interface ImageWithFallbackProps {
-  src: string
+interface ClientImageWithFallbackProps {
+  imageUrls: (string | null | undefined)[]
   alt: string
-  fallbackSrc?: string
   className?: string
   fill?: boolean
   sizes?: string
@@ -17,10 +16,9 @@ interface ImageWithFallbackProps {
   height?: number
 }
 
-export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
-  src,
+export const ClientImageWithFallback: React.FC<ClientImageWithFallbackProps> = ({
+  imageUrls,
   alt,
-  fallbackSrc,
   className,
   fill = false,
   sizes,
@@ -29,34 +27,37 @@ export const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   width,
   height,
 }) => {
-  const [imgSrc, setImgSrc] = useState(src)
-  const [hasError, setHasError] = useState(false)
+  const validImageUrls = imageUrls.filter((url): url is string => !!url);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imgSrc, setImgSrc] = useState(validImageUrls[0] || getRandomPlaceholder());
 
   useEffect(() => {
-    setImgSrc(src)
-    setHasError(false)
-  }, [src])
+    setCurrentImageIndex(0);
+    setImgSrc(validImageUrls[0] || getRandomPlaceholder());
+  }, [imageUrls]);
 
   const handleError = () => {
-    if (!hasError) {
-      setHasError(true)
-      setImgSrc(fallbackSrc || getRandomPlaceholder())
+    const nextIndex = currentImageIndex + 1;
+    if (nextIndex < validImageUrls.length) {
+      setCurrentImageIndex(nextIndex);
+      setImgSrc(validImageUrls[nextIndex]);
+    } else {
+      setImgSrc(getRandomPlaceholder());
     }
-  }
+  };
 
-  // If src is missing, empty, or not a string, show a random SVG
-  if (!src || typeof src !== 'string' || src.trim() === '') {
+  if (validImageUrls.length === 0) {
     return (
       <img
         src={getRandomPlaceholder()}
         alt={alt}
         className={className}
-        style={fill ? { width: '100%', height: '100%', objectFit: 'cover' } : undefined}
+        style={fill ? { width: '100%', height: '100%', objectFit: 'cover' } : {}}
         width={width}
         height={height}
         onClick={onClick}
       />
-    )
+    );
   }
 
   return (

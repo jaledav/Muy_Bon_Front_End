@@ -20,12 +20,6 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.trvl-media.com",
       },
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "3000",
-        pathname: "/api/image-proxy/**",
-      },
     ],
   },
 }

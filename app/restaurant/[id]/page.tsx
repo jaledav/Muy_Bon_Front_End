@@ -486,63 +486,6 @@ export default function RestaurantPage() {
                       </div>
                     </div>
                   )}
-                  {similarPlacesByVibe && similarPlacesByVibe.length > 0 && (
-                    <div className="pt-4 mt-4 border-t dark:border-gray-700">
-                      <h4 className="font-semibold mb-3 text-lg">You Might Also Like (Similar Vibes)</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {similarPlacesByVibe.map((place, idx) => (
-                          <Link key={place.id || idx} href={`/restaurant/${place.id}`} passHref>
-                            <Card className="h-full hover:shadow-lg transition-shadow">
-                              <CardContent className="p-0">
-                                <div className="relative aspect-video">
-                                  <ImageWithFallback
-                                    src={place.cover_image_url || getRandomPlaceholder()}
-                                    alt={place.name || "Similar restaurant"}
-                                    fill
-                                    className="object-cover rounded-t-md"
-                                  />
-                                </div>
-                                <div className="p-3">
-                                  <h5 className="font-medium truncate">{place.name}</h5>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {similarPlacesByVibe.length === 0 &&
-                    people_also_search_gmaps &&
-                    people_also_search_gmaps.length > 0 && (
-                      <div className="pt-4 mt-4 border-t dark:border-gray-700">
-                        <h4 className="font-semibold mb-3 text-lg">You Might Also Like</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                          {people_also_search_gmaps.slice(0, 3).map((place, idx) => (
-                            <Link key={place.id || idx} href={`/restaurant/${place.id}`} passHref>
-                              <Card className="h-full hover:shadow-lg transition-shadow">
-                                <CardContent className="p-0">
-                                  <div className="relative aspect-video">
-                                    <ImageWithFallback
-                                      src={
-                                        place.cover_image_url ||
-                                        getRandomPlaceholder()
-                                      }
-                                      alt={place.name || "Similar restaurant"}
-                                      fill
-                                      className="object-cover rounded-t-md"
-                                    />
-                                  </div>
-                                  <div className="p-3">
-                                    <h5 className="font-medium truncate">{place.name}</h5>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                 </AccordionContent>
               </AccordionItem>
 

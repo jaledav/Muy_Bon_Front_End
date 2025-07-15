@@ -52,34 +52,35 @@ export default function ProfilePage() {
 
       const newProfile = {
         id: user.id,
-        name: user.user_metadata?.name || user.email?.split("@")[0] || "User",
-        created_at: new Date().toISOString(),
+        name: user.name || user.email?.split("@")[0] || "User",
       }
 
       // Use upsert with onConflict to handle potential race conditions
-      const { error: upsertError } = await supabase.from("profiles").upsert(newProfile, { onConflict: "id" })
+      const { data: upsertedData, error: upsertError } = await supabase
+        .from("profiles")
+        .upsert(newProfile, { onConflict: "id" })
+        .select()
+        .single()
 
       if (upsertError) {
         console.error("Error creating profile:", upsertError)
+        toast({
+          title: "Error creating profile",
+          description: "Could not create your user profile. Please try again.",
+          variant: "destructive",
+        })
         return
       }
 
-      // Fetch the profile again to ensure we have the latest data
-      const { data: updatedData, error: refetchError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-
-      if (refetchError) {
-        console.error("Error fetching updated profile:", refetchError)
-        return
-      }
-
-      setProfile(updatedData)
-      setName(updatedData.name || "")
+      setProfile(upsertedData)
+      setName(upsertedData.name || "")
     } catch (error) {
       console.error("Error in profile fetch:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while fetching your profile.",
+        variant: "destructive",
+      })
     } finally {
       setProfileLoading(false)
     }

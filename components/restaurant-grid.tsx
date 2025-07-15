@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { searchRestaurants, type Restaurant } from "@/lib/supabase-client"
 import Link from "next/link"
-import { ImageWithFallback } from "@/components/ui/image-with-fallback"
+import { ClientImageWithFallback } from "@/components/ui/client-image-with-fallback"
 import { SmartCoverImage } from "@/components/ui/smart-cover-image"
 import { Star, MapPinIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -89,13 +89,8 @@ export default async function RestaurantGrid({
             >
               <Link href={`/restaurant/${restaurant.id || restaurant.google_place_id}`} className="block group">
                 <div className="relative w-full h-48 overflow-hidden">
-                  <ImageWithFallback
-                    src={
-                      restaurant.cover_image_url_gmaps ||
-                      (Array.isArray(restaurant.image_urls_gmaps) && restaurant.image_urls_gmaps.length > 0
-                        ? restaurant.image_urls_gmaps[0]
-                        : getRandomPlaceholder())
-                    }
+                  <ClientImageWithFallback
+                    imageUrls={[restaurant.cover_image_url_gmaps, ...(restaurant.image_urls_gmaps || [])]}
                     alt={restaurant.name || "Restaurant image"}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, (max-width: 1536px) 33vw, 25vw"
