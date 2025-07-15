@@ -18,13 +18,6 @@ export function PaginationControls({ currentPage, totalPages, searchParams }: Pa
 
   const handlePageChange = useCallback(
     (page: number) => {
-      console.log("=== PAGINATION DEBUG ===")
-      console.log("Clicked page:", page)
-      console.log("Current page:", currentPage)
-      console.log("Current pathname:", pathname)
-      console.log("Current search params:", urlSearchParams.toString())
-      console.log("Props searchParams:", searchParams)
-
       // Create new URLSearchParams
       const params = new URLSearchParams(urlSearchParams.toString())
 
@@ -36,17 +29,11 @@ export function PaginationControls({ currentPage, totalPages, searchParams }: Pa
       }
 
       const newUrl = `${pathname}?${params.toString()}`
-      console.log("New URL:", newUrl)
-
+      
       // Navigate
       router.push(newUrl)
-
-      // Force refresh
-      setTimeout(() => {
-        window.location.reload()
-      }, 100)
     },
-    [router, pathname, urlSearchParams, currentPage, searchParams],
+    [router, pathname, urlSearchParams],
   )
 
   const getVisiblePages = () => {
@@ -85,18 +72,8 @@ export function PaginationControls({ currentPage, totalPages, searchParams }: Pa
     return null
   }
 
-  console.log("Pagination render - Current:", currentPage, "Total:", totalPages)
-
   return (
     <div className="space-y-4">
-      {/* Debug Info */}
-      <div className="text-xs text-gray-500 text-center">
-        <p>
-          Debug: Current page = {currentPage}, Total pages = {totalPages}
-        </p>
-        <p>URL params: {urlSearchParams.toString()}</p>
-      </div>
-
       {/* Pagination Controls */}
       <div className="flex items-center justify-center gap-2">
         <Button
@@ -140,9 +117,6 @@ export function PaginationControls({ currentPage, totalPages, searchParams }: Pa
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
-
-      {/* Manual Test Buttons */}
-      {/* Force page buttons removed as requested */}
     </div>
   )
 }

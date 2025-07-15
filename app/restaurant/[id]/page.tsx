@@ -47,7 +47,7 @@ interface SimilarPlace {
   vibes_gmaps?: string[] | null
 }
 
-interface RestaurantWithDetails extends RestaurantWithReviews {
+interface RestaurantWithDetails extends Omit<RestaurantWithReviews, 'people_also_search_gmaps'> {
   people_also_search_gmaps?: SimilarPlace[] | null
 }
 
@@ -181,7 +181,7 @@ const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth
   return (
     <div className="grid grid-cols-2 grid-rows-2 h-full">
       {validImages.slice(0, 4).map((img, idx) => (
-        <div key={idx} className="relative h-full">
+        <div key={`hero-${idx}`} className="relative h-full">
           <Image
             src={getSrc(img) || "/placeholder.svg"}
             alt={`${altText} ${idx + 1}`}
@@ -235,7 +235,7 @@ export default function RestaurantPage() {
     }
   }
 
-  const scrollToRef = (ref: React.RefObject<HTMLDivElement>, accordionValue?: string) => {
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>, accordionValue?: string) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: "smooth", block: "start" })
       if (accordionValue) {
@@ -347,7 +347,9 @@ export default function RestaurantPage() {
   const reservationLink =
     reserve_table_url_gmaps ||
     (Array.isArray(booking_links_gmaps) && booking_links_gmaps.length > 0
-      ? booking_links_gmaps[0]?.url
+      ? (typeof booking_links_gmaps[0] === "object" && booking_links_gmaps[0] !== null && "url" in booking_links_gmaps[0]
+          ? (booking_links_gmaps[0] as { url: string }).url
+          : null)
       : typeof booking_links_gmaps === "string"
         ? booking_links_gmaps
         : null)
@@ -464,8 +466,8 @@ export default function RestaurantPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Vibes</h4>
                       <div className="flex flex-wrap gap-2">
-                        {vibes_gmaps.map((vibe) => (
-                          <Badge key={vibe} variant="secondary">
+                        {vibes_gmaps.map((vibe, index) => (
+                          <Badge key={`${vibe}-${index}`} variant="secondary">
                             {vibe}
                           </Badge>
                         ))}
@@ -489,7 +491,7 @@ export default function RestaurantPage() {
                                       "/placeholder.svg" ||
                                       "/placeholder.svg"
                                     }
-                                    alt={place.name}
+                                    alt={place.name || "Similar restaurant"}
                                     fill
                                     className="object-cover rounded-t-md"
                                   />
@@ -523,7 +525,7 @@ export default function RestaurantPage() {
                                         "/placeholder.svg" ||
                                         "/placeholder.svg"
                                       }
-                                      alt={place.name}
+                                      alt={place.name || "Similar restaurant"}
                                       fill
                                       className="object-cover rounded-t-md"
                                     />
@@ -557,17 +559,14 @@ export default function RestaurantPage() {
                     if (Array.isArray(opening_hours_gmaps)) {
                       return (
                         <ul className="space-y-1">
-                          {opening_hours_gmaps.map((entry: any, index: number) => {
-                            if (typeof entry === "object" && entry !== null && "day" in entry && "hours" in entry) {
-                              return (
-                                <li key={index} className="flex justify-between">
-                                  <span className="capitalize font-medium">{entry.day}:</span>
-                                  <span>{String(entry.hours)}</span>
-                                </li>
-                              )
-                            }
-                            return null
-                          })}
+                          {opening_hours_gmaps
+                            .filter((entry: any) => typeof entry === "object" && entry !== null && "day" in entry && "hours" in entry)
+                            .map((entry: any, index: number) => (
+                              <li key={`opening-${entry.day}-${index}`} className="flex justify-between">
+                                <span className="capitalize font-medium">{entry.day}:</span>
+                                <span>{String(entry.hours)}</span>
+                              </li>
+                            ))}
                         </ul>
                       )
                     } else if (
@@ -606,7 +605,7 @@ export default function RestaurantPage() {
                       </span>
                     </div>
                   )}
-                  {popular_times_histogram_gmaps && <PopularTimesChart popularTimes={popular_times_histogram_gmaps} />}
+                  {popular_times_histogram_gmaps && typeof popular_times_histogram_gmaps === 'object' && <PopularTimesChart popularTimes={popular_times_histogram_gmaps as Record<string, any>} />}
                 </AccordionContent>
               </AccordionItem>
 
@@ -625,7 +624,7 @@ export default function RestaurantPage() {
                   <AccordionContent className="px-6 pb-6 pt-2">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {galleryImages.map((imgUrl, idx) => (
-                        <div key={idx} className="relative aspect-square rounded-md overflow-hidden">
+                        <div key={`gallery-${idx}`} className="relative aspect-square rounded-md overflow-hidden">
                           <Image
                             src={imgUrl || "/placeholder.svg"}
                             alt={`${name} gallery image ${idx + 1}`}
@@ -695,10 +694,10 @@ export default function RestaurantPage() {
                               <div className="space-y-1">
                                 {Object.entries(reviews_distribution_gmaps as Record<string, number>)
                                   .sort((a, b) => Number.parseInt(b[0]) - Number.parseInt(a[0]))
-                                  .map(([rating, count]) => {
+                                  .map(([rating, count], index) => {
                                     const percentage = reviews_count_gmaps ? (count / reviews_count_gmaps) * 100 : 0
                                     return (
-                                      <div key={rating} className="flex items-center text-sm">
+                                      <div key={`rating-${rating}-${index}`} className="flex items-center text-sm">
                                         <span className="w-16">{rating} star</span>
                                         <div className="flex-1 h-2 mx-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                                           <div
@@ -894,7 +893,7 @@ const RestaurantPageSkeleton: React.FC = () => (
         {[...Array(3)].map(
           // Adjusted skeleton count for quick pulse
           (_, i) => (
-            <Skeleton key={i} className="w-24 h-8 rounded-full" />
+            <Skeleton key={`pulse-${i}`} className="w-24 h-8 rounded-full" />
           ),
         )}
       </div>
@@ -903,7 +902,7 @@ const RestaurantPageSkeleton: React.FC = () => (
           {[...Array(2)].map(
             // Adjusted skeleton count for accordion items
             (_, i) => (
-              <Skeleton key={i} className="w-full h-32 rounded-lg" />
+              <Skeleton key={`accordion-${i}`} className="w-full h-32 rounded-lg" />
             ),
           )}
         </div>

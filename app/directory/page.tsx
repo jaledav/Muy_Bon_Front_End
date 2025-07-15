@@ -4,12 +4,13 @@ import RestaurantGrid from "@/components/restaurant-grid"
 import FilterSidebar from "@/components/filter-sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export default function DirectoryPage({
+export default async function DirectoryPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  console.log("DirectoryPage searchParams:", searchParams)
+  const resolvedSearchParams = await searchParams
+  console.log("DirectoryPage searchParams:", resolvedSearchParams)
 
   return (
     <main className="min-h-screen bg-[#f9f5f0]">
@@ -23,7 +24,7 @@ export default function DirectoryPage({
           </div>
           <div className="w-full lg:w-3/4">
             <Suspense fallback={<RestaurantGridSkeleton />}>
-              <RestaurantGrid searchParams={searchParams} />
+              <RestaurantGrid searchParams={resolvedSearchParams} />
             </Suspense>
           </div>
         </div>
