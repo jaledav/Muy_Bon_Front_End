@@ -340,14 +340,14 @@ export default function RestaurantPage() {
     return pubName ? !uniqueCriticPublications.has(pubName) : true
   })
 
-  const isRealImage = (url: string | null | undefined): url is string => {
-    return !!url && !url.includes("placeholder");
-  };
+  const heroImages =
+    image_urls_gmaps && image_urls_gmaps.length > 0
+      ? image_urls_gmaps
+      : cover_image_url_gmaps
+        ? [cover_image_url_gmaps]
+        : [getBestRestaurantImage(restaurant)]
 
-  const allImages = [cover_image_url_gmaps, ...(image_urls_gmaps || [])].filter(isRealImage);
-
-  const heroImages = allImages.length > 0 ? allImages : [getBestRestaurantImage(restaurant)];
-  const galleryImages = allImages.slice(0, 12);
+  const galleryImages = image_urls_gmaps?.slice(0, 12) || []
   const hasGoogleReviews = google_user_reviews && google_user_reviews.length > 0
   const hasCriticOrWebReviews =
     (critic_reviews && critic_reviews.length > 0) || (filteredCseSnippets && filteredCseSnippets.length > 0)
@@ -486,63 +486,6 @@ export default function RestaurantPage() {
                       </div>
                     </div>
                   )}
-                  {similarPlacesByVibe && similarPlacesByVibe.length > 0 && (
-                    <div className="pt-4 mt-4 border-t dark:border-gray-700">
-                      <h4 className="font-semibold mb-3 text-lg">You Might Also Like (Similar Vibes)</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {similarPlacesByVibe.map((place, idx) => (
-                          <Link key={place.id || idx} href={`/restaurant/${place.id}`} passHref>
-                            <Card className="h-full hover:shadow-lg transition-shadow">
-                              <CardContent className="p-0">
-                                <div className="relative aspect-video">
-                                  <ImageWithFallback
-                                    src={place.cover_image_url || getRandomPlaceholder()}
-                                    alt={place.name || "Similar restaurant"}
-                                    fill
-                                    className="object-cover rounded-t-md"
-                                  />
-                                </div>
-                                <div className="p-3">
-                                  <h5 className="font-medium truncate">{place.name}</h5>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {similarPlacesByVibe.length === 0 &&
-                    people_also_search_gmaps &&
-                    people_also_search_gmaps.length > 0 && (
-                      <div className="pt-4 mt-4 border-t dark:border-gray-700">
-                        <h4 className="font-semibold mb-3 text-lg">You Might Also Like</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                          {people_also_search_gmaps.slice(0, 3).map((place, idx) => (
-                            <Link key={place.id || idx} href={`/restaurant/${place.id}`} passHref>
-                              <Card className="h-full hover:shadow-lg transition-shadow">
-                                <CardContent className="p-0">
-                                  <div className="relative aspect-video">
-                                    <ImageWithFallback
-                                      src={
-                                        place.cover_image_url ||
-                                        getRandomPlaceholder()
-                                      }
-                                      alt={place.name || "Similar restaurant"}
-                                      fill
-                                      className="object-cover rounded-t-md"
-                                    />
-                                  </div>
-                                  <div className="p-3">
-                                    <h5 className="font-medium truncate">{place.name}</h5>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                 </AccordionContent>
               </AccordionItem>
 
@@ -698,23 +641,32 @@ export default function RestaurantPage() {
                                 </div>
                               </div>
                               <div className="space-y-1">
-                                {Object.entries(reviews_distribution_gmaps as Record<string, number>)
-                                  .sort((a, b) => Number.parseInt(b[0]) - Number.parseInt(a[0]))
-                                  .map(([rating, count], index) => {
-                                    const percentage = reviews_count_gmaps ? (count / reviews_count_gmaps) * 100 : 0
-                                    return (
-                                      <div key={`rating-${rating}-${index}`} className="flex items-center text-sm">
-                                        <span className="w-16">{rating} star</span>
-                                        <div className="flex-1 h-2 mx-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                          <div
-                                            className="h-2 bg-yellow-400 rounded-full"
-                                            style={{ width: `${percentage}%` }}
-                                          ></div>
+                                {(() => {
+                                  const ratingMap: Record<string, number> = {
+                                    fiveStar: 5,
+                                    fourStar: 4,
+                                    threeStar: 3,
+                                    twoStar: 2,
+                                    oneStar: 1,
+                                  }
+                                  return Object.entries(reviews_distribution_gmaps as Record<string, number>)
+                                    .sort(([keyA], [keyB]) => (ratingMap[keyB] || 0) - (ratingMap[keyA] || 0))
+                                    .map(([rating, count], index) => {
+                                      const percentage = reviews_count_gmaps ? (count / reviews_count_gmaps) * 100 : 0
+                                      return (
+                                        <div key={`rating-${rating}-${index}`} className="flex items-center text-sm">
+                                          <span className="w-16">{ratingMap[rating] || rating}</span>
+                                          <div className="flex-1 h-2 mx-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                            <div
+                                              className="h-2 bg-yellow-400 rounded-full"
+                                              style={{ width: `${percentage}%` }}
+                                            ></div>
+                                          </div>
+                                          <span className="w-10 text-right">{count}</span>
                                         </div>
-                                        <span className="w-10 text-right">{count}</span>
-                                      </div>
-                                    )
-                                  })}
+                                      )
+                                    })
+                                })()}
                               </div>
                             </Card>
                           )}
