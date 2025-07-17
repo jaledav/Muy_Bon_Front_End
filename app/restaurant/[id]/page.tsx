@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import Image from "next/image"
+<<<<<<< Updated upstream
 import {
   Star,
   ArrowLeft,
@@ -31,15 +32,26 @@ import {
   type CriticReview,
   type CSEReviewSnippet,
 } from "@/lib/supabase-client"
+=======
+import { Star, ArrowLeft, Info, Sparkles, Tag, Camera, MapPin, MessageSquare, Clock } from "lucide-react"
+import { fetchRestaurantById, testCSESnippets, testImageUrls, type RestaurantWithReviews } from "@/lib/supabase-client"
+>>>>>>> Stashed changes
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+<<<<<<< Updated upstream
 import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 import PopularTimesChart from "@/components/popular-times-chart"
 import { cn, getBestRestaurantImage, getRandomPlaceholder } from "@/lib/utils"
+=======
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase-client"
+import PopularTimesChart from "@/components/popular-times-chart"
+>>>>>>> Stashed changes
 
 interface SimilarPlace {
   id: string
@@ -83,16 +95,89 @@ const findSimilarByVibe = (
   return similarWithScores.slice(0, limit)
 }
 
+<<<<<<< Updated upstream
 const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth: boolean }> = ({
+=======
+// Helper function to validate and clean image URLs
+const validateImageUrl = (url: string | null | undefined): string | null => {
+  if (!url || typeof url !== "string") return null
+  const cleanUrl = url.trim()
+  // TEMP: Allow all http(s) URLs for debugging
+  if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) return null
+  return cleanUrl
+}
+
+// Helper function to process image URLs array
+const processImageUrls = (imageUrls: any): string[] => {
+  console.log("[processImageUrls] Input:", imageUrls, "Type:", typeof imageUrls)
+
+  if (!imageUrls) return []
+
+  let urls: string[] = []
+
+  if (typeof imageUrls === "string") {
+    try {
+      // Try to parse as JSON if it's a string
+      const parsed = JSON.parse(imageUrls)
+      if (Array.isArray(parsed)) {
+        urls = parsed
+      } else {
+        urls = [imageUrls]
+      }
+    } catch {
+      // If not JSON, treat as single URL
+      urls = [imageUrls]
+    }
+  } else if (Array.isArray(imageUrls)) {
+    urls = imageUrls
+  }
+
+  // Log all raw URLs before validation
+  console.log("[processImageUrls] Raw URLs:", urls)
+
+  // Filter and validate URLs
+  const validUrls = urls.map((url) => validateImageUrl(url)).filter((url): url is string => url !== null)
+
+  // Log all valid URLs after validation
+  console.log("[processImageUrls] Valid URLs:", validUrls)
+  return validUrls
+}
+
+const HeroCollage: React.FC<{ images: string[]; altText: string; useLowBandwidth: boolean; restaurantId?: string }> = ({
+>>>>>>> Stashed changes
   images,
   altText,
   useLowBandwidth,
+  restaurantId,
 }) => {
   const validImages = images.filter(Boolean)
   const placeholder = getRandomPlaceholder()
   const lowBandwidthPlaceholder = getRandomPlaceholder()
 
+<<<<<<< Updated upstream
   const getSrc = (url?: string) => (useLowBandwidth ? lowBandwidthPlaceholder : url || placeholder)
+=======
+  console.log("[HeroCollage] Received images:", images)
+  console.log("[HeroCollage] Valid images:", validImages)
+  console.log("[HeroCollage] Failed images:", Array.from(failedImages))
+  console.log("[HeroCollage] Loaded images:", Array.from(loadedImages))
+
+  const handleImageError = (imageUrl: string, imageIndex: number) => {
+    console.warn(`[HeroCollage] Image failed to load (restaurantId=${restaurantId}, idx=${imageIndex + 1}): ${imageUrl}`)
+    setFailedImages((prev) => new Set([...prev, imageUrl]))
+  }
+
+  const handleImageLoad = (imageUrl: string, imageIndex: number) => {
+    console.log(`[HeroCollage] Image loaded successfully (${imageIndex + 1}): ${imageUrl}`)
+    setLoadedImages((prev) => new Set([...prev, imageUrl]))
+  }
+
+  const getSrc = (url?: string, index?: number) => {
+    if (useLowBandwidth) return lowBandwidthPlaceholder
+    if (!url || failedImages.has(url)) return placeholder
+    return url
+  }
+>>>>>>> Stashed changes
 
   if (useLowBandwidth || validImages.length === 0) {
     return (
@@ -330,6 +415,10 @@ export default function RestaurantPage() {
     permanently_closed_gmaps,
     temporarily_closed_gmaps,
     people_also_search_gmaps,
+    address_gmaps,
+    category_name_gmaps,
+    claim_this_business_gmaps,
+    is_advertisement_gmaps,
   } = restaurant
 
   const criticSummary = critic_reviews?.find((r) => r.summary_critic)?.summary_critic || description_gmaps
@@ -340,12 +429,50 @@ export default function RestaurantPage() {
     return pubName ? !uniqueCriticPublications.has(pubName) : true
   })
 
+<<<<<<< Updated upstream
   const heroImages =
     image_urls_gmaps && image_urls_gmaps.length > 0
       ? image_urls_gmaps
       : cover_image_url_gmaps
         ? [cover_image_url_gmaps]
         : [getBestRestaurantImage(restaurant)]
+=======
+  const uniqueCriticPublications = new Set(
+    critic_reviews?.map((r: { publication_critic: string | null }) => r.publication_critic?.toLowerCase()),
+  )
+
+  console.log("[RestaurantPage] Unique critic publications:", Array.from(uniqueCriticPublications))
+
+  const filteredCseSnippets = cse_review_snippets?.filter(
+    (s: import("@/lib/supabase-client").CSEReviewSnippet) => {
+      const pubName = (s.publication_cse || s.domain_cse)?.toLowerCase()
+      const shouldInclude = pubName ? !uniqueCriticPublications.has(pubName) : true
+      console.log(`[RestaurantPage] CSE snippet ${s.id}: pubName="${pubName}", shouldInclude=${shouldInclude}`)
+      return shouldInclude
+    },
+  )
+
+  console.log("[RestaurantPage] Filtered CSE snippets:", filteredCseSnippets)
+  console.log("[RestaurantPage] ================================")
+
+  // Enhanced image processing
+  console.log("[RestaurantPage] ===== IMAGE PROCESSING DEBUG =====")
+  console.log("[RestaurantPage] Raw cover_image_url_gmaps:", cover_image_url_gmaps)
+  console.log("[RestaurantPage] Raw image_urls_gmaps:", image_urls_gmaps)
+  
+  // Only use Supabase-hosted images for hero and gallery
+  const processedImageUrls = processImageUrls(image_urls_gmaps)
+  const supabaseImages = processedImageUrls.filter(url => url.includes('.supabase.co/storage/v1/object/public/'))
+
+  // If no Supabase images, fallback to placeholder (do not use Google images)
+  const heroImages = supabaseImages.length > 0 ? supabaseImages : []
+  const galleryImages = supabaseImages.slice(0, 12)
+
+  console.log("[RestaurantPage] Processed image URLs:", processedImageUrls)
+  console.log("[RestaurantPage] Final hero images:", heroImages)
+  console.log("[RestaurantPage] Final gallery images:", galleryImages)
+  console.log("[RestaurantPage] ===================================")
+>>>>>>> Stashed changes
 
   const galleryImages = image_urls_gmaps?.slice(0, 12) || []
   const hasGoogleReviews = google_user_reviews && google_user_reviews.length > 0
@@ -398,6 +525,7 @@ export default function RestaurantPage() {
           images={heroImages as string[]}
           altText={`Collage for ${name}`}
           useLowBandwidth={useLowBandwidth}
+          restaurantId={restaurant?.id}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
         <div className="absolute bottom-0 left-0 p-6 md:p-8">
@@ -420,36 +548,66 @@ export default function RestaurantPage() {
         <div className="container mx-auto max-w-5xl px-4">
           <div className="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
             {total_score_gmaps && reviews_count_gmaps && (
+<<<<<<< Updated upstream
               <QuickPulseChip
                 key={`pulse-rating-${id || 'loading'}`}
                 icon={<Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
                 label={`${total_score_gmaps.toFixed(1)} (${reviews_count_gmaps.toLocaleString()})`}
                 onClick={() => scrollToRef(reviewsRef, "reviews")}
               />
+=======
+              <React.Fragment key="quick-pulse-score">
+                <Badge variant="secondary" className="flex items-center space-x-1 cursor-pointer" onClick={() => scrollToRef(reviewsRef, "reviews")}> 
+                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  <span>{total_score_gmaps.toFixed(1)} ({reviews_count_gmaps.toLocaleString()})</span>
+                </Badge>
+              </React.Fragment>
+>>>>>>> Stashed changes
             )}
             {/* Location Chip REMOVED */}
             {vibes_gmaps &&
               vibes_gmaps.length > 0 &&
+<<<<<<< Updated upstream
               vibes_gmaps.map((vibe, index) => (
                 <QuickPulseChip
                   key={`vibe-${index}-${id || 'loading'}`}
                   icon={<Sparkles className="w-4 h-4" />}
                   label={vibe}
+=======
+              vibes_gmaps.map((vibe, idx) => (
+                <Badge
+                  key={vibe + '-' + idx}
+                  variant="secondary"
+                  className="flex items-center space-x-1 cursor-pointer"
+>>>>>>> Stashed changes
                   onClick={() => scrollToRef(aboutRef, "about")}
-                />
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{vibe}</span>
+                </Badge>
               ))}
             {price_range_gmaps && (
+<<<<<<< Updated upstream
               <QuickPulseChip
                 key={`pulse-price-${id || 'loading'}`}
                 icon={<Tag className="w-4 h-4" />}
                 label={price_range_gmaps}
                 onClick={() => scrollToRef(aboutRef, "about")}
               />
+=======
+              <React.Fragment key="quick-pulse-price">
+                <Badge variant="secondary" className="flex items-center space-x-1 cursor-pointer" onClick={() => scrollToRef(aboutRef, "about")}> 
+                  <Tag className="w-4 h-4" />
+                  <span>{price_range_gmaps}</span>
+                </Badge>
+              </React.Fragment>
+>>>>>>> Stashed changes
             )}
           </div>
         </div>
       </div>
 
+<<<<<<< Updated upstream
       <div className="container mx-auto max-w-5xl px-4 py-8">
         <div className="lg:flex lg:space-x-8">
           <div className="lg:w-2/3">
@@ -887,3 +1045,277 @@ const NotFoundMessage: React.FC = () => (
     </div>
   </main>
 )
+=======
+      {/* --- BANNERS --- */}
+      {(permanently_closed_gmaps || temporarily_closed_gmaps || claim_this_business_gmaps || is_advertisement_gmaps) && (
+        <div className="container mx-auto max-w-5xl px-4 mt-4">
+          {permanently_closed_gmaps && (
+            <div className="bg-red-100 text-red-800 px-4 py-2 rounded mb-2 font-semibold">Permanently Closed</div>
+          )}
+          {temporarily_closed_gmaps && (
+            <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded mb-2 font-semibold">Temporarily Closed</div>
+          )}
+          {claim_this_business_gmaps && (
+            <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded mb-2 font-semibold">Claim this business</div>
+          )}
+          {is_advertisement_gmaps && (
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded mb-2 font-semibold">Advertisement</div>
+          )}
+        </div>
+      )}
+
+      <Tabs defaultValue="about" className="container mx-auto max-w-5xl px-4 py-8">
+        <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsTrigger value="about" onClick={() => scrollToRef(aboutRef, "about")}>About</TabsTrigger>
+          <TabsTrigger value="gallery" onClick={() => scrollToRef(galleryRef, "gallery")}>Gallery</TabsTrigger>
+          <TabsTrigger value="info" onClick={() => scrollToRef(aboutRef, "info")}>Info</TabsTrigger>
+          <TabsTrigger value="reviews" onClick={() => scrollToRef(reviewsRef, "reviews")}>Reviews</TabsTrigger>
+          <TabsTrigger value="popular-times" onClick={() => scrollToRef(aboutRef, "popular-times")}>Popular Times</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="about">
+          <div className="lg:flex lg:space-x-8">
+            <div className="lg:w-full">
+              <Accordion
+                type="single"
+                collapsible
+                value={activeAccordionItem}
+                onValueChange={handleAccordionChange}
+                className="w-full space-y-4"
+              >
+                <AccordionItem
+                  value="about"
+                  ref={aboutRef}
+                  className="border dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800"
+                >
+                  <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                    <div className="flex items-center">
+                      <Info className="w-5 h-5 mr-3 text-primary dark:text-primary-light" />
+                      About
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-6 pt-2 space-y-6">
+                    <p className="text-base leading-relaxed">{criticSummary || "No description available."}</p>
+                    {vibes_gmaps && vibes_gmaps.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2">Vibes</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {/* key: vibe + '-' + idx (vibe may not be unique) */}
+                          {vibes_gmaps.map((vibe, idx) => (
+                            <Badge key={vibe + '-' + idx} variant="secondary">
+                              {vibe}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {similarPlacesByVibe && similarPlacesByVibe.length > 0 && (
+                      <div className="pt-4 mt-4 border-t dark:border-gray-700">
+                        <h4 className="font-semibold mb-3 text-lg">You Might Also Like (Similar Vibes)</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {/* key: place.id (should be unique, fallback to idx if missing) */}
+                          {similarPlacesByVibe.map((place, idx) => {
+                            if (!place.id) {
+                              console.warn('[SimilarPlacesByVibe] Missing id for place at idx', idx, place)
+                            }
+                            return (
+                              <Link key={place.id || `similar-vibe-${idx}`} href={`/restaurant/${place.id}`} passHref>
+                                <Card className="h-full hover:shadow-lg transition-shadow">
+                                  <CardContent className="p-0">
+                                    <div className="relative aspect-video">
+                                      <Image
+                                        src={place.cover_image_url || "/placeholder.svg"}
+                                        alt={place.name || "Similar Restaurant"}
+                                        fill
+                                        className="object-cover rounded-t-md"
+                                      />
+                                    </div>
+                                    <div className="p-3">
+                                      <h5 className="font-semibold text-base text-gray-900 truncate">{place.name}</h5>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {similarPlacesByVibe.length === 0 &&
+                      people_also_search_gmaps &&
+                      people_also_search_gmaps.length > 0 && (
+                        <div className="pt-4 mt-4 border-t dark:border-gray-700">
+                          <h4 className="font-semibold mb-3 text-lg">You Might Also Like</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {/* key: place.id (should be unique, fallback to idx if missing) */}
+                            {people_also_search_gmaps.slice(0, 3).map((place, idx) => {
+                              if (!place.id) {
+                                console.warn('[PeopleAlsoSearch] Missing id for place at idx', idx, place)
+                              }
+                              return (
+                                <Link key={place.id || `people-also-${idx}`} href={`/restaurant/${place.id}`} passHref>
+                                  <Card className="h-full hover:shadow-lg transition-shadow">
+                                    <CardContent className="p-0">
+                                      <div className="relative aspect-video">
+                                        <Image
+                                          src={place.cover_image_url || "/placeholder.svg"}
+                                          alt={place.name || "Similar Restaurant"}
+                                          fill
+                                          className="object-cover rounded-t-md"
+                                        />
+                                      </div>
+                                      <div className="p-3">
+                                        <h5 className="font-semibold text-base text-gray-900 truncate">{place.name}</h5>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                </Link>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="gallery">
+          {galleryImages.length > 0 && (
+            <section ref={galleryRef} className="my-8">
+              <h3 className="text-lg font-semibold mb-4">Gallery</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {galleryImages.map((img, idx) => (
+                  <div key={`gallery-${img}-${idx}`} className="relative aspect-square rounded overflow-hidden">
+                    <Image
+                      src={img}
+                      alt={`Gallery image ${idx + 1} for ${name}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          {hasAnyReviews && (
+            <section ref={reviewsRef} className="my-8">
+              <h3 className="text-lg font-semibold mb-4">Reviews</h3>
+              {/* Google Reviews */}
+              {hasGoogleReviews && (
+                <div className="mb-8">
+                  <h4 className="font-semibold mb-2">Google Reviews</h4>
+                  <div className="space-y-4">
+                    {google_user_reviews.map((review, idx) => (
+                      <Card key={`google-review-${review.id || idx}`} className="p-4 bg-gray-50 dark:bg-gray-800">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <span className="font-semibold">{review.reviewer_name_gmaps || "Anonymous"}</span>
+                            {review.published_at_text_gmaps && (
+                              <span className="ml-2 text-xs text-muted-foreground">{review.published_at_text_gmaps}</span>
+                            )}
+                          </div>
+                          {review.stars_gmaps && (
+                            <div className="flex items-center">
+                              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
+                              <span className="text-sm font-medium">{review.stars_gmaps}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {review.review_text_gmaps || "No review text available."}
+                        </p>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Critics Reviews (deduplicated by publication/domain) */}
+              {hasCriticOrWebReviews && (
+                <div>
+                  <h4 className="font-semibold mb-2">Critics Reviews</h4>
+                  <div className="space-y-4">
+                    {/* Combine and deduplicate critic_reviews and filteredCseSnippets */}
+                    {[
+                      ...(critic_reviews || []),
+                      ...(filteredCseSnippets || [])
+                    ].map((review, idx) => {
+                      // Use id if present, otherwise idx
+                      const key = review.id || `critic-cse-${idx}`
+                      // Use ReviewCard for both types, type narrowing with 'in'
+                      const isCritic = 'publication_critic' in review
+                      return (
+                        <ReviewCard
+                          key={key}
+                          review={review}
+                          type={isCritic ? "critic" : "cse"}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+        </TabsContent>
+
+        <TabsContent value="info">
+          <div className="lg:flex lg:space-x-8">
+            <div className="lg:w-2/3">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Restaurant Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-2">Contact & Location</h4>
+                    <ul className="space-y-2 text-sm">
+                      {address_gmaps && <li><strong>Address:</strong> {address_gmaps}</li>}
+                      {phone_gmaps && <li><strong>Phone:</strong> <a href={`tel:${phone_gmaps}`} className="text-primary underline">{phone_gmaps}</a></li>}
+                      {website_gmaps && <li><strong>Website:</strong> <a href={website_gmaps} target="_blank" rel="noopener noreferrer" className="text-primary underline">{website_gmaps}</a></li>}
+                      {menu_url_gmaps && <li><strong>Menu:</strong> <a href={menu_url_gmaps} target="_blank" rel="noopener noreferrer" className="text-primary underline">View Menu</a></li>}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Details</h4>
+                    <ul className="space-y-2 text-sm">
+                      {price_range_gmaps && <li><strong>Price:</strong> {price_range_gmaps}</li>}
+                      {category_name_gmaps && <li><strong>Category:</strong> {category_name_gmaps}</li>}
+                      {Array.isArray(vibes_gmaps) && vibes_gmaps.length > 0 && vibes_gmaps.every(tag => typeof tag === 'string') && (
+                        <li><strong>Tags:</strong> {vibes_gmaps.join(", ")}</li>
+                      )}
+                      {booking_links_gmaps && typeof booking_links_gmaps === "string" && <li><strong>Booking:</strong> <a href={booking_links_gmaps} target="_blank" rel="noopener noreferrer" className="text-primary underline">Book Now</a></li>}
+                    </ul>
+                  </div>
+                </div>
+                {/* Only render opening hours if it's an array of strings */}
+                {Array.isArray(opening_hours_gmaps) && opening_hours_gmaps.every(h => typeof h === 'string') && (
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-2">Opening Hours</h4>
+                    <ul className="space-y-1 text-sm">
+                      {opening_hours_gmaps.map((h, idx) => <li key={idx}>{h}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="popular-times">
+          {popular_times_histogram_gmaps && typeof popular_times_histogram_gmaps === 'object' && (
+            <section className="my-8">
+              <h3 className="text-lg font-semibold mb-2">Popular Times</h3>
+              <PopularTimesChart popularTimes={popular_times_histogram_gmaps as Record<string, any>} />
+            </section>
+          )}
+        </TabsContent>
+      </Tabs>
+    </main>
+  )
+}
+>>>>>>> Stashed changes
